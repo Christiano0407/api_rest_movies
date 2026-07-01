@@ -6,5 +6,185 @@ dist/
 wheels/
 *.egg-info
 
+# ════════════════════════════════════════════════════════════════
+# Blog-WorldCupsoccker-platform - Git Ignore
+# Archivos y directorios que NO se commitean al repositorio
+# ════════════════════════════════════════════════════════════════
+
+# ════════════════════════════════════════════════════════════════
+# Sistema Operativo
+# ════════════════════════════════════════════════════════════════
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ════════════════════════════════════════════════════════════════
+# IDE / Editores
+# ════════════════════════════════════════════════════════════════
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.kite/
+*.sublime-workspace
+*.sublime-project
+
+# ════════════════════════════════════════════════════════════════
+# VARIABLES DE ENTORNO (CRÍTICO - NUNCA COMMITEAR)
+# ════════════════════════════════════════════════════════════════
+.env
+.env.local
+.env.development
+.env.production
+.env.*.local
+!.env.example
+
+# ════════════════════════════════════════════════════════════════
+# SECRETOS Y LLAVES (CRÍTICO)
+# ════════════════════════════════════════════════════════════════
+*.key
+*.pem
+*.crt
+*.p12
+*.pfx
+secrets/
+credentials/
+*.credentials
+
+# ════════════════════════════════════════════════════════════════
+# Python - FastAPI + uv
+# ════════════════════════════════════════════════════════════════
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.Python
+
 # Virtual environments
-.venv
+.venv/
+venv/
+env/
+ENV/
+.env/
+
+# Python tooling
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.cover
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+*.whl
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Alembic migrations
+apps/*/alembic/
+
+# ════════════════════════════════════════════════════════════════
+# Node.js - pnpm + npm/yarn
+# ════════════════════════════════════════════════════════════════
+node_modules/
+.pnpm-store/
+.npm
+.yarn-integrity
+.yarn/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Turborepo
+.turbo/
+
+# TypeScript
+*.tsbuildinfo
+*.js.map
+*.d.ts.map
+
+# Next.js
+frontend/web-app/.next/
+frontend/web-app/out/
+frontend/web-app/.vercel/
+
+# Vite
+.vite/
+*.local
+
+# ════════════════════════════════════════════════════════════════
+# Logs
+# ════════════════════════════════════════════════════════════════
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+**/logs/
+**/*.log
+
+# ════════════════════════════════════════════════════════════════
+# Docker
+# ════════════════════════════════════════════════════════════════
+docker-compose.override.yml
+*.pid
+*.seed
+.dockerignore
+
+# Docker volumes (datos persistentes)
+*.vol
+volumes/
+
+# ════════════════════════════════════════════════════════════════
+# Testing / Coverage
+# ════════════════════════════════════════════════════════════════
+coverage/
+.nyc_output/
+.playwright-test/
+playwright-report/
+
+# ════════════════════════════════════════════════════════════════
+# Infraestructura / DevOps
+# ════════════════════════════════════════════════════════════════
+infra/nginx/*.log
+*.log
+deploy.sh
+
+# Terraform (futuro)
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# ════════════════════════════════════════════════════════════════
+# Datos y Archivos Temporales
+# ════════════════════════════════════════════════════════════════
+*.tmp
+*.temp
+*.bak
+*.backup
+*.swp
+.DS_Store
+apps/**/data/
+**/data/
+tmp/
+temp/
+
+# ════════════════════════════════════════════════════════════════
+# Misc
+# ════════════════════════════════════════════════════════════════
+*.md~
+*.orig
+*.rej
+*.bak
+*.old
+*.sass-cache
+.cache/
+.parcel-cache/

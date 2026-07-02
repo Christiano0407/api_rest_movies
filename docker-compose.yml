@@ -24,7 +24,7 @@ services:
   redis: 
     image: redis:7-alpine
     container_name: cinema_redis
-    restart: unless_stopped
+    restart: unless-stopped
     ports: 
       - "6379:6379"
     volumes:
@@ -42,7 +42,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: cinema_api
-    restart: unless_stopped
+    restart: unless-stopped
     env_file: .env
     depends_on:
       postgres: 
@@ -65,7 +65,7 @@ services:
   nginx: 
     image: nginx:1.27-alpine
     container_name: cinema_nginx
-    restart: unless_stopped
+    restart: unless-stopped
     depends_on:
       api: 
         condition: service_healthy

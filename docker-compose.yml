@@ -76,12 +76,12 @@ services:
     networks:
       - cinema_net
 
-  networks:
-    cinema_net:
-      driver: bridge
+networks:
+  cinema_net:
+    driver: bridge
 
-  volumes:
-    postgres_data:
-      redis_data:
+volumes:
+  postgres_data:
+  redis_data:
 
     

@@ -25,3 +25,16 @@ dev = [
     "pytest-asyncio>=0.24.0",
     "ruff>=0.6.0",
 ]
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+ 
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+ 
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ 
+[tool.pytest.ini_options]
+asyncio_mode = "auto"

@@ -168,6 +168,31 @@ schemas:
         description: true, para agregar a la watchlist de TMDB, false, para remover
         example: true
 
+# ---- Schemes: Para no Duplicar ---- #
+MovieComplementaryData:
+  type: object
+  properties:
+    movie_id:
+      type: integer
+    details:
+      type: object
+    credits: 
+      type: object
+    videos: 
+      type: array
+      items: 
+        type: object
+
+WatchlistSyncResult: 
+  type: object
+  properties:
+    success: 
+      type: boolean
+    status_message: 
+      type: string
+    example: 
+      success: true
+      status_message: success.
   
 
 

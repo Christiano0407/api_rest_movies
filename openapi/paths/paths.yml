@@ -2,3 +2,9 @@ paths:
   # =========================================================
   # IDENTITY & ACCESS MANAGEMENT (IAM - Local)
   # =========================================================
+  auth_register:
+    tags: 
+      - identity & Access
+    summary: Registro de Usuario (local) | User Register
+    description: Registrar un nuevo Usuario en la base de datos relacional 
+      (postgres) aplicando hashing con bcrypt 

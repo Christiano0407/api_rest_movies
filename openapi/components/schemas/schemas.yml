@@ -2,6 +2,7 @@ schemas:
   # =========================================================
   # Schemas / schemes
   # =========================================================
+  # ---- Register User ---- #
   UserRegister:
     type: object
     required:
@@ -24,7 +25,88 @@ schemas:
         minLength: 8   
         example: "developerStrongPassword01" 
 
+  # ---- User Response: Account User ---- #
   UserResponse:
+    type: object
+    required:
+      - id
+      - username 
+      - email 
+      - role 
+      - is_active
+      - created_at
+    properties:
+      id: 
+        type: string
+        example: 1
+      username: 
+        type: string
+        example: alma_cantu
+      email: 
+        type: string
+        format: email
+        example: dev@example.com
+      role: 
+        type: string
+        enum: [Admin, Manager, Editor, Moderator, Premium, User]
+        example: User
+      is_active:
+        type: boolean
+        example: true
+      created_at:
+        type: string
+        format: date-time
+        example: "2026-07-01T12:00:00Z"
+
+# ---- Token Response Access Healthy ---- #
+  TokenScheme:
+    type: object
+    required: 
+      - access_token
+      - refresh_token
+      - token_type
+    properties: 
+      access_token:
+        type: string
+        example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+      refresh_token: 
+        type: string
+        example: "alJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ7..."
+      token_type: 
+        type: string
+        example: bearer
+
+# --- TMDB Movies: Logic Response / Proxy / Schemes Business --- #
+  TMDBMovieResult:
+    type: object
+    required: 
+      - id 
+      - title
+      - overview
+      - vote_overage
+      - genre_ids
+    properties:
+
+
+  GatewayPaginationResponse: 
+    type: object
+    required: 
+      - page
+      - results
+      - total_pages
+      - total_results
+      - from_cache
+      - rate_limiting_remaining
+    properties:
+
+  WatchlistPayload:
+    type: object
+    required: 
+      - media_type
+      - media_id
+      - watchlist
+    properties:
+
 
   
 

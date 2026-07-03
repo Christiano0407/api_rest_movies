@@ -2,3 +2,10 @@ securitySchemes:
   # =========================================================
   # Security Schemes
   # =========================================================
+    OAuth2PasswordBearer:
+    type: oauth2
+    description: Inyecta el Access Token...
+    flows:              
+      password:
+        tokenUrl: /auth/login
+        scopes: {}

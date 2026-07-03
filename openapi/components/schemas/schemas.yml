@@ -134,7 +134,7 @@ schemas:
       results:
         type: array
         items: 
-          $ref: './TMDBMovieResult.yml'
+          $ref: '#/components/schemas/TMDBMovieResult'
       total_pages:
         type: integer
         example: 500
@@ -190,9 +190,6 @@ WatchlistSyncResult:
       type: boolean
     status_message: 
       type: string
-    example: 
-      success: true
-      status_message: success.
   
 
 

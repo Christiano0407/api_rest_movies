@@ -156,7 +156,17 @@ schemas:
       - media_id
       - watchlist
     properties:
-
+      media_type: 
+        type: string
+        enum: [movie, tv]
+        example: movie
+      media_id: 
+        type: integer
+        example: 18
+      watchlist: 
+        type: boolean
+        description: true, para agregar a la watchlist de TMDB, false, para remover
+        example: true
 
   
 

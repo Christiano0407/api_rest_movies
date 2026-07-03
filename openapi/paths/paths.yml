@@ -15,10 +15,44 @@ paths:
               $ref: '../components/schemas/UserRegister.yml'
       responses:
         '201':
-          description: Usuario creado exitosamente
+          description: Usuario creado exitosamente 
           content:
             application/json:
               schema:
                 $ref: '../components/schemas/UserResponse.yml'
         '422':
           description: Error de validación de datos de entrada (Pydantic)
+
+  /auth/login: 
+    post: 
+      tags:
+        - identity & Access
+      summary: Inicio de Sesión (o Volver a entrar) local (OAuth2 Password Flow)
+      description: Intercambiar credenciales verificadas por un par de 
+        Tokens Criptográficos (Access JTW & Refresh Token)
+      operationId: loginUser
+      requestBody: 
+        required: true
+        content: 
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                username: 
+                  type: string
+                  example: alma_cantu
+                password: 
+                  type: string
+                  format: password
+                  example: "developerStrongPassword01"
+      responses:
+        "200": 
+          description: Autenticación correcta | Authentication Success (AUTH)
+          content: 
+            application/json:
+              schema:
+                $ref:'../components/schemas/TokenScheme.yml'
+        "401": 
+          description:Credenciales Inválidas 
+
+  # --- Path TMDB --- #

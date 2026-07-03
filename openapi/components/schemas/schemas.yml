@@ -1,0 +1,31 @@
+schemas:
+  # =========================================================
+  # Schemas / schemes
+  # =========================================================
+  UserRegister:
+    type: object
+    required:
+       - username 
+       - email 
+       - password
+    properties:
+      username:
+        type: string
+        minLength: 3
+        maxLength: 30
+        example: alma_cantu
+      email: 
+        type: string
+        format: email
+        example: dev@example.com
+      password: 
+        type: string
+        format: password
+        minLength: 8   
+        example: "developerStrongPassword01" 
+
+  UserResponse:
+
+  
+
+

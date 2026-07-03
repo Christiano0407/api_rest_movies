@@ -86,6 +86,36 @@ schemas:
       - vote_overage
       - genre_ids
     properties:
+      id:
+        type: string
+        example: 1
+      title: 
+        type: string
+        example: Star Wars
+      overview: 
+        type: string
+        example: Princess Leia is held hostage by the evil Imperial Forces...
+      poster_path: 
+        type: string
+        nullable: true
+        example: /6FfAOFwRtU56mDpOehXZI7Yv3j1.jpg
+      backdrop_path: 
+        type: string
+        nullable: true
+        example: /6FfAOFwRtU56mDpOehXZI7Yv3j1.jpg
+      release_date: 
+        type: string
+        format: date
+        example: "1977-05-25" 
+      vote_overage:
+        type: number
+        format: float
+        example: 8.5
+      genre_ids: 
+        type: array
+        items: 
+          type: integer
+        example: [12, 28, 878]
 
 
   GatewayPaginationResponse: 
@@ -98,6 +128,26 @@ schemas:
       - from_cache
       - rate_limiting_remaining
     properties:
+      page: 
+        type: string
+        example: 1
+      results:
+        type: array
+        items: 
+          $ref: './TMDBMovieResult.yml'
+      total_pages:
+        type: integer
+        example: 500
+      total_results:
+        type: integer
+        example: 1000
+      from_cache: 
+        type: boolean
+        description: Determina si el Gateway resolvió la petición desde Redis en menos de 2 milisegundos
+      rate_limiting_remaining: 
+        type: integer
+        description: 
+          Peticiones disponibles que le quedan al usuario para el minuto actual según su rol (RBAC)
 
   WatchlistPayload:
     type: object

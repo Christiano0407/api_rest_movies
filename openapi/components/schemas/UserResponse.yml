@@ -1,0 +1,30 @@
+type: object
+required:
+  - id
+  - username
+  - email
+  - role
+  - is_active
+  - created_at
+properties:
+  id:
+    type: integer
+    example: 1
+  username:
+    type: string
+    example: alma_cantu
+  email:
+    type: string
+    format: email
+    example: dev@example.com
+  role:
+    type: string
+    enum: [Admin, Manager, Editor, Moderator, Premium, User]
+    example: User
+  is_active:
+    type: boolean
+    example: true
+  created_at:
+    type: string
+    format: date-time
+    example: "2026-07-01T12:00:00Z"

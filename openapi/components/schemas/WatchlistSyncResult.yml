@@ -1,0 +1,8 @@
+type: object
+properties:
+  success:
+    type: boolean
+    example: true
+  status_message:
+    type: string
+    example: success.

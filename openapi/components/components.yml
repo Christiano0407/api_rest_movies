@@ -1,4 +1,20 @@
 components:
-  # =========================================================
-  # Components (Contract)
-  # =========================================================
+  schemas:
+    UserRegister:
+      $ref: './schemas/UserRegister.yml'
+    UserResponse:
+      $ref: './schemas/UserResponse.yml'
+    TokenScheme:
+      $ref: './schemas/TokenScheme.yml'
+    TMDBMovieResult:
+      $ref: './schemas/TMDBMovieResult.yml'
+    GatewayPaginationResponse:
+      $ref: './schemas/GatewayPaginationResponse.yml'
+    WatchlistPayload:
+      $ref: './schemas/WatchlistPayload.yml'
+    MovieComplementaryData:
+      $ref: './schemas/MovieComplementaryData.yml'
+    WatchlistSyncResult:
+      $ref: './schemas/WatchlistSyncResult.yml'
+  securitySchemes:
+    $ref: './securitySchemes/securitySchemes.yml#/securitySchemes'

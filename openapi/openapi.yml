@@ -1,15 +1,29 @@
 openapi: 3.1.0
 
-info: 
+info:
   title: Cinema API Gateway | Secure & Auth Token
   version: 1.0.0
   description: |
     API Gateway empresarial de alta velocidad. Intercepta, valida 
-    y optimiza las peticiones API de TMDB. Inyecta capas transversales description:
-    * **Autentication (AUTH) & Authorization (JWT + RBAC) | Tokens & Roles **
+    y optimiza las peticiones API de TMDB. Inyecta capas transversales:
+    * **Authentication (AUTH) & Authorization (JWT + RBAC) | Tokens & Roles **
     * **Rate Limiting (Límite de Queries - peticiones) Dinámico por Rol (Redis - Caché)** 
     * **Caché Inteligente de Contenido de Cine (Redis < 2ms)**
-  
+
 servers:
   - url: http://localhost:8000/api/v1
     description: Servidor de Desarrollo Local (Detrás de Nginx)
+
+tags:
+  - name: identity & Access
+    description: Autenticación y Autorización (JWT + RBAC)
+  - name: Movies
+    description: Proxy de contenido TMDB con caché inteligente
+  - name: Watchlist
+    description: Sincronización de watchlists con TMDB
+
+paths:
+  $ref: './paths/paths.yml'
+
+components:
+  $ref: './components/components.yml'

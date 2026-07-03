@@ -1,10 +1,24 @@
 paths:
-  # =========================================================
-  # IDENTITY & ACCESS MANAGEMENT (IAM - Local)
-  # =========================================================
-  auth_register:
-    tags: 
-      - identity & Access
-    summary: Registro de Usuario (local) | User Register
-    description: Registrar un nuevo Usuario en la base de datos relacional 
-      (postgres) aplicando hashing con bcrypt 
+  /auth/register:
+    post:
+      tags:
+        - identity & Access
+      summary: Registro de Usuario (local) | User Register
+      description: Registrar un nuevo Usuario en la base de datos relacional
+        (postgres) aplicando hashing con bcrypt
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/UserRegister.yml'
+      responses:
+        '201':
+          description: Usuario creado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '../components/schemas/UserResponse.yml'
+        '422':
+          description: Error de validación de datos de entrada (Pydantic)

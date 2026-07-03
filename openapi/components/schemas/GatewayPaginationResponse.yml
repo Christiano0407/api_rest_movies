@@ -1,0 +1,28 @@
+type: object
+required:
+  - page
+  - results
+  - total_pages
+  - total_results
+  - from_cache
+  - rate_limiting_remaining
+properties:
+  page:
+    type: integer
+    example: 1
+  results:
+    type: array
+    items:
+      $ref: './TMDBMovieResult.yml'
+  total_pages:
+    type: integer
+    example: 500
+  total_results:
+    type: integer
+    example: 1000
+  from_cache:
+    type: boolean
+    description: Determina si el Gateway resolvió la petición desde Redis en menos de 2 milisegundos
+  rate_limiting_remaining:
+    type: integer
+    description: Peticiones disponibles que le quedan al usuario para el minuto actual según su rol (RBAC)

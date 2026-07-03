@@ -1,0 +1,38 @@
+type: object
+required:
+  - id
+  - title
+  - overview
+  - vote_overage
+  - genre_ids
+properties:
+  id:
+    type: integer
+    example: 1
+  title:
+    type: string
+    example: Star Wars
+  overview:
+    type: string
+    example: Princess Leia is held hostage by the evil Imperial Forces...
+  poster_path:
+    type: string
+    nullable: true
+    example: /6FfAOFwRtU56mDpOehXZI7Yv3j1.jpg
+  backdrop_path:
+    type: string
+    nullable: true
+    example: /6FfAOFwRtU56mDpOehXZI7Yv3j1.jpg
+  release_date:
+    type: string
+    format: date
+    example: "1977-05-25"
+  vote_overage:
+    type: number
+    format: float
+    example: 8.5
+  genre_ids:
+    type: array
+    items:
+      type: integer
+    example: [12, 28, 878]

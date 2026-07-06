@@ -1,8 +1,14 @@
 type: object
+description: Resultado de la sincronización y mutación (combinar) de la Watchlist en los servidores de TMDB.
+required:
+  - success
+  - status_message
 properties:
   success:
-    type: boolean
+    type: 
+    description: Indica si TMDB aceptó y procesó la mutación correctamente.
     example: true
   status_message:
     type: string
+    description: Mensaje descriptivo de estado retornado directamente por la API de TMDB o el Gateway.
     example: success.

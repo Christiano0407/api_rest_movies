@@ -121,3 +121,15 @@ paths:
   # =========================================================
   # USER SYNC & MUTATIONS (TMDB Session Binding)
   # =========================================================
+  /account/watchlist:
+    post: 
+      tags: 
+        - User Account Sync
+      summary: Sincronizar & Alterar la Watchlist del Usuario (RBAC) y Data (postgres) en su cuenta real de TMDB
+      description: |
+        Identificar al usuario por su JWT (Token) local, extraer **SQLAlchemy(ORM)** su 'tmdb_session_id', 
+        y ejecuta la mutación de la API externa de TMDB (Agregar info). 
+        **Impacta directamente en las métricas de Popularidad y Trending de TMDB diariamente.**
+      operationId: updateTMDBWatchlist
+      security:
+        - OAuth2PasswordBearer: []

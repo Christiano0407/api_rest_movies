@@ -14,16 +14,40 @@ servers:
   - url: http://localhost:8000/api/v1
     description: Servidor de Desarrollo Local (Detrás de Nginx)
 
+# =========================================================
+# DEFINICIÓN GLOBAL DE TAGS (Controla el orden en la UI)
+# =========================================================
 tags:
-  - name: identity & Access
+  - name: Identity & Access
     description: Autenticación y Autorización (JWT + RBAC)
-  - name: Movies
-    description: Proxy de contenido TMDB con caché inteligente
-  - name: Watchlist
-    description: Sincronización de watchlists con TMDB
+  - name: Cinema Discovery
+    description: Proxy de contenido TMDB con caché inteligente y agregación concurrentes
+  - name: User Account Sync
+    description: Sincronización de watchlists y mutaciones con servidores reales de TMDB
 
+# =========================================================
+# ENDPOINTS DE RUTAS INDIVIDUALS (Evita romper el estándar)
+# =========================================================
 paths:
-  $ref: './paths/paths.yml'
+  /cinema/movies/{category}:
+    $ref: './paths/movies_category.yml'
+  /cinema/movies/{movie_id}/complementary:
+    $ref: './paths/movies_complementary.yml'
+  /account/watchlist:
+    $ref: './paths/watchlist.yml'
 
 components:
-  $ref: './components/components.yml'
+  schemas:
+    UserRegister:
+      $ref: './components/schemas/UserRegister.yml'
+    GatewayPaginationResponse:
+      $ref: './components/schemas/GatewayPaginationResponse.yml'
+    MovieComplementaryData:
+      $ref: './components/schemas/MovieComplementaryData.yml'
+    WatchlistSyncResult:
+      $ref: './components/schemas/WatchlistSyncResult.yml'
+  parameters:
+    MovieCategoryParam:
+      $ref: './components/parameters/MovieCategoryParam.yml'
+    MovieIdParam:
+      $ref: './components/parameters/MovieIdParam.yml'

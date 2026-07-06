@@ -10,6 +10,9 @@ info:
     * **Rate Limiting (Límite de Queries - peticiones) Dinámico por Rol (Redis - Caché)** 
     * **Caché Inteligente de Contenido de Cine (Redis < 2ms)**
 
+# =========================================================
+# Server (Servidor)
+# =========================================================
 servers:
   - url: http://localhost:8000/api/v1
     description: Servidor de Desarrollo Local (Detrás de Nginx)

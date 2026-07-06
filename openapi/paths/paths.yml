@@ -62,7 +62,7 @@ paths:
   /cinema/movies/{category}:
     get: 
       tags: 
-        - Cinema Discovery (API TMDB)
+        - Cinema Discovery
       summary: Obtener listado de películas por Categoría
       description: | 
         Mapear Dinámicamente los 'endpoints' (Rutas) de listas de TMDB (`now_playing`, `popular`, `top_rated`, `upcoming`).
@@ -93,7 +93,7 @@ paths:
   /cinema/movies/{movie_id}/complementary:
     get: 
       tags: 
-        - Cinema Discovery (API ID - TMDB)
+        - Cinema Discovery
       summary: Obtener (get) y agregar los datos complementarios de una película (movie) por ID
       description: | 
         Ejecutar llamadas concurrentes asíncronas (Call async & Await) no bloqueantes

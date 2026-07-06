@@ -1,0 +1,7 @@
+name: movie_id
+in: path 
+required: true
+description: ID único (Unique ID) de la película en TMDB.
+schema:
+  type: integer
+example: 7

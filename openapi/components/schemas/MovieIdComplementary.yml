@@ -1,0 +1,17 @@
+type: object
+description: Datos agregados de manera concurrente (async) en Detalles, Créditos & Vídeos.
+parameters: 
+  movie_id: 
+    type: integer
+    example: 7
+  details:
+    type: object
+    description: Objeto de detalles (crudo) devueltos por TMDB.
+  credits: 
+    type: object
+    description: Objeto con información sobre los créditos (Cast & Crew) de las películas. Devueltos por TMDB.
+  videos: 
+    type: array
+    description: Lista (as) de V´deos, Trailers oficiles en TMDB.
+    items:
+      type: object

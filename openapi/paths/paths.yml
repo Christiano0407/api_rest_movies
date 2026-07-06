@@ -61,7 +61,8 @@ paths:
   # =========================================================
   /cinema/movies/{category}:
     get: 
-      tags: Cinema Discovery (API TMDB)
+      tags: 
+        - Cinema Discovery (API TMDB)
       summary: Obtener listado de películas por Categoría
       description: | 
         Mapear Dinámicamente los 'endpoints' (Rutas) de listas de TMDB (`now_playing`, `popular`, `top_rated`, `upcoming`).
@@ -89,6 +90,30 @@ paths:
         "429": 
           description: Rate Limit(peticions/queries) de Negocio excedido para el minuto actual según tu Rol.
 
+  /cinema/movies/{movie_id}/complementary:
+    get: 
+      tags: 
+        - Cinema Discovery (API ID - TMDB)
+      summary: Obtener (get) y agregar los datos complementarios de una película (movie) por ID
+      description: | 
+        Ejecutar llamadas concurrentes asíncronas (Call async & Await) no bloqueantes
+        (`asyncio.gather`) hacia los endpoints de detalles, créditos y videos de TMDB para reducir la latencia en el Frontend.
+      operationId: getMoviesComplementaryData
+      security:
+        - OAuth2PasswordBearer: []
+      parameters:
+        - $ref: '/components/parameters/MovieIdParam.yml'
+      responses:
+        "200": 
+          description: JSON agregado con éxito desde TMDB mediante concurrencia (async&Await)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MovieComplementaryData'
+        "401": 
+          description: Token Inválido o Expirado (Vuelve a ejecutar credenciales)
+        "403": 
+          description: No tienes los permisos requeridos (RBAC).
             
 
 

@@ -1,4 +1,5 @@
 components:
+# --- Schemas & Models de Datos (JSON) | Tokens --- #  
   schemas:
     UserRegister:
       $ref: './schemas/UserRegister.yml'
@@ -16,5 +17,12 @@ components:
       $ref: './schemas/MovieComplementaryData.yml'
     WatchlistSyncResult:
       $ref: './schemas/WatchlistSyncResult.yml'
+# --- Security --- #
   securitySchemes:
     $ref: './securitySchemes/securitySchemes.yml#/securitySchemes'
+# --- Parameters - TMDB Params de URL Reutilizables --- #
+  parameters:
+    MovieCategoryParam: 
+      $ref: './parameters/MovieCategoryParam.yml'
+    MoviePageParam: 
+      $ref: './parameters/MoviePageParam.yml'

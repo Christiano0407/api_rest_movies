@@ -1,0 +1,8 @@
+name: category
+in: path
+required: true
+description: Categoría válida por TMDB
+schema:
+  type: string
+  enum: [now_playing, popular, top_rated, upcoming]
+  example: now_playing

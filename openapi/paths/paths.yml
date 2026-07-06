@@ -59,8 +59,37 @@ paths:
   # --- Path TMDB --- #
   # CINEMA CORE & DISCOVERY (Cached & Proxy TMDB)
   # =========================================================
+  /cinema/movies/{category}:
+    get: 
+      tags: Cinema Discovery (API TMDB)
+      summary: Obtener listado de películas por Categoría
+      description: | 
+        Mapear Dinámicamente los 'endpoints' (Rutas) de listas de TMDB (`now_playing`, `popular`, `top_rated`, `upcoming`).
+        ++flujo (Pipeline/Proceso)**: Valida JWT local -> Evalúa cuota en Redis por Rol -> Verificar caché en Redis.
+      operationId: getMoviesByCategory
+      security: 
+        - OAuth2PasswordBearer: []
+      parameters: 
+        - $ref: '#components/parameters/MovieCategoryParam'
+        - $ef: '#/components/parameters/MoviePageParam'
+      responses: 
+        "200": 
+          description: Listado Obtenido (desde Caché o Fetch asíncrono a TMDB)
+          headers: 
+            X-Cache: 
+              schema: 
+                type: string
+              description: Inyectado desde Gateway(API). Valores Comerciales MIT.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GatewayPaginationResponse'
+        "401":
+          description: Token Inválido o Expirado (Vuelve a ejecutar credenciales)
+        "429": 
+          description: Rate Limit(peticions/queries) de Negocio excedido para el minuto actual según tu Rol.
 
-
+            
 
 
 

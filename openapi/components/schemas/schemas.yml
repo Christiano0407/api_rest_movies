@@ -190,6 +190,7 @@ WatchlistSyncResult:
       type: boolean
     status_message: 
       type: string
+
   
 
 

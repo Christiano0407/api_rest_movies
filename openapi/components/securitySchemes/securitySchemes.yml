@@ -1,7 +1,7 @@
 securitySchemes:
   OAuth2PasswordBearer:
     type: oauth2
-    description: Inyecta el Access Token generado localmente por el Gateway en el header `Authorization: Bearer <JWT>`
+    description: "Inyecta el Access Token generado localmente por el Gateway en el header `Authorization: Bearer <JWT>`"
     flows:
       password:
         tokenUrl: /auth/login

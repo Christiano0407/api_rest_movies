@@ -17,8 +17,6 @@ components:
       $ref: './schemas/MovieComplementaryData.yml'
     WatchlistSyncResult:
       $ref: './schemas/WatchlistSyncResult.yml'
-    WatchlistSyncResult:
-      $ref: './schemas/WatchlistSyncResult.yml'
     MovieIdComplementary: 
       $ref: './schemas/MovieComplementaryData.yml.yml'
 # --- Security --- #

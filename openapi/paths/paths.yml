@@ -133,3 +133,20 @@ paths:
       operationId: updateTMDBWatchlist
       security:
         - OAuth2PasswordBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WatchListPayload'
+      responses:
+        "200": 
+          description: Sincronización exitosa con los servidores de TMDB API
+          content: 
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WatchListSyncResult'
+        "400": 
+          description: El Usuario no ha vinculado o creado una cuenta válida de TMDB en éste Gateway
+        "401": 
+          description: Token JWT Local Inválido. Ha expirado o Ausente.

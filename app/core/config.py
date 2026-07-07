@@ -70,7 +70,7 @@ class Settings(BaseSettings):
 
   # --- Celery / ARQ (ETL async) --- # 
 
-  ## ── Docs ─────────────────────────────────────────────────────────────────
+  ## ── Docs | DLCS ─────────────────────────────────────────────────────────────────
   @property
   def docs_enable(self) -> bool:
       return self.ENVIRONMENT in ("development", "staging")
@@ -96,4 +96,13 @@ def validator_secret_key(cls, v:str) -> str:
           raise ValueError("jwt_secret_key must be at least 32 characters (Debe tener al menos 32 caracteres.)")
     return v
 
+@model_validator(mode="after")
+def secure_cookie_in_production(self) -> Settings:
+    if self.ENVIRONMENT == "production" and not self.REFRESH_COOKIE_SECURE:
+        raise ValueError("REFRESH_COOKIE_SECURE must be True in production")
+    return self
+
 ## ---- Cache ----
+@lru_cache(maxsize=1)
+def get_settings() -> Settings:
+      return Settings()

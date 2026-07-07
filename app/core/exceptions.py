@@ -16,3 +16,38 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 ## ---- Logging (History) ----
+
+# ─── Domain Exceptions ────────────────────────────────────────────────────────
+class NotFoundError(Exception): 
+  def __init__(self, resource: str = "Recurso") -> None:
+      self.resource = resource
+      super().__init__(f"{resource} no encontrado")
+
+
+class ConflictError(Exception):
+    def __init__(self, detail: str = "El Recurso (resource) ya existe") -> None:
+       super().__init__(detail)
+       self.detail = detail
+
+
+class AuthenticationError(Exception):
+    def __init__(self, detail: str = "Credenciales Inválidas o han Expirado (Token - JWT)") -> None:
+       super().__init__(detail)
+       self.detail = detail
+
+
+class AuthorizationError(Exception):
+    def __init__(self, detail: str = "Acceso Denegado (No tiene Autorización) | RBAC") -> None:
+       super().__init__(detail)
+       self.detail = detail
+
+
+class BusinessLogicError(Exception):
+    def __init__(self, detail: str) -> None: 
+       super().__init__(detail)
+       self.detail = detail
+
+
+
+# ─── Handlers | Starlette (Async - FastAPI)  ─────────────────────────────────-
+

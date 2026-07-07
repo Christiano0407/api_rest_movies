@@ -61,3 +61,5 @@ def configure_logging(log_level:str="INFO", environment:str="development") -> No
 
 
 ## === See Logging - History | Event - streaming === 
+    def get_logger(name:str | None = None) -> structlog.stdlib.BoundLogger: 
+         return structlog.get_logger(name)

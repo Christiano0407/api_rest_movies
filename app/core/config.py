@@ -63,12 +63,17 @@ class Settings(BaseSettings):
   CORS_ALLOW_CREDENTIALS: bool = True
 
   # --- Rate Limiting (Límite de 'Request' / Peticiones) --- #
+  RATE_LIMIT_PUBLIC: int = 30 # req/min
+  RATE_LIMIT_AUTH: int = 10 # req/min
 
   # --- DB: MinIO / Storage s3 --- #
 
   # --- Celery / ARQ (ETL async) --- # 
 
   ## ── Docs ─────────────────────────────────────────────────────────────────
+  @property
+  def docs_enable(self) -> bool:
+      return self.ENVIRONMENT in ("development", "staging")
 
   ## ── Validators ───────────────────────────────────────────────────────────
   # --- Database URL (2) --- #
@@ -83,3 +88,12 @@ class Settings(BaseSettings):
     return self
   
 settings = Settings()
+
+@field_validator("JWT_SECRET_KEY")
+@classmethod
+def validator_secret_key(cls, v:str) -> str:
+    if len(v) <32:
+          raise ValueError("jwt_secret_key must be at least 32 characters (Debe tener al menos 32 caracteres.)")
+    return v
+
+## ---- Cache ----

@@ -11,3 +11,5 @@
     # bcrypt	Algoritmo hashing especializado
     # =======  
 """
+
+from __future__ import annotations

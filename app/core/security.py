@@ -88,7 +88,56 @@ def decode_token(token:str, settings:Settings) -> dict[str, Any]:
   try: 
     return jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
   except JWTError as exec:
-      raise AuthenticationError("Credenciales Inválidas o Expiraron | Fecha del 'Token' expiró") from exec
+      raise AuthenticationError(
+        "Credenciales Inválidas o Expiraron | Fecha del 'Token' expiró") from exec
 
 #? ─── FastAPI Dependencies ────────────────────────────────────────────────────
 # - Minimal parsed token payload injected into routes. (Carga útil mínima del token analizado inyectada en las rutas)  # noqa: E501
+
+class CurrentUser: 
+  """
+    Minimal parsed token payload injected into routes. (Carga útil mínima del token analizado inyectada en las rutas)  # noqa: E501
+    - ID User 
+    - Role (RBAC)
+  """  # noqa: E501
+  def __init__(self, user_id:str, role:str) -> None:
+    self.user_id = user_id
+    self.role = role
+
+  def _get_current_user(
+      credentials: HTTPAuthorizationCredentials | None = Depends(_bearer_scheme),
+      settings: Settings = Depends(get_setting), 
+  ) -> CurrentUser: 
+    if not credentials: 
+      raise AuthenticationError("Credenciales Inválidas o han expirado | Tiempo del Token expiró")
+    payload = decode_token(credentials.credentials, settings)
+    if payload.get("kind") != "access":
+        raise AuthenticationError("Token Inválido - Se requiere access token")
+    return CurrentUser(user_id=payload["sub"], role=payload.get("role", "reader"))
+  
+  def get_current_user(
+      user: CurrentUser=Depends(_get_current_user)
+  ) -> CurrentUser:
+    return user
+  
+  def require_roles(*roles:str): 
+    """
+        Factory that returns a dependency enforcing role membership.(Fábrica que devuelve 
+        una dependencia que impone la membresía del rol.)
+        - 403 Forbidden en la autenticación 'JWT' indica que el servidor rechaza 
+            el acceso porque el token es inválido, está ausente 
+            o carece de los permisos necesarios.
+        - 403 Forbidden indica que el servidor entiende la solicitud pero niega 
+            el acceso porque el cliente carece de los permisos necesarios.
+    """
+    def _dep(user:CurrentUser = Depends(get_current_user)) -> CurrentUser:
+      if user.role not in roles: 
+        raise AuthorizationError(
+          "Acceso denegado | el token es inválido, está ausente o carece de los permisos necesarios"
+        )
+      return user
+      
+    return _dep
+  
+  require_admin = require_roles("admin")
+  require_editor_or_admin = require_roles("admin", "editor")

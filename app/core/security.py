@@ -76,9 +76,19 @@ def access_token(user_id:str, role:str, settings: Settings) -> str:
 
 # === Create: Refresh Token ===
 def refresh_token(user_id:str, settings:Settings) -> str:
-  pass
+  return _create_token(
+    subject=user_id, 
+    kind="refresh",
+    expires_delta=timedelta(days=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES),
+    settings=settings,
+  )
 
 # === Decode (Decodificar el Error) Token  | Error Token ===
+def decode_token(token:str, settings:Settings) -> dict[str, Any]: 
+  try: 
+    return jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
+  except JWTError as exec:
+      raise AuthenticationError("Credenciales Inválidas o Expiraron | Fecha del 'Token' expiró") from exec
 
 #? ─── FastAPI Dependencies ────────────────────────────────────────────────────
 # - Minimal parsed token payload injected into routes. (Carga útil mínima del token analizado inyectada en las rutas)  # noqa: E501

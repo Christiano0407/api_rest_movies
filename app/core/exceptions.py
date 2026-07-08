@@ -109,12 +109,42 @@ def register_exception_handler(app: FastAPI) -> None:
          headers={"WWW-Authenticate": "Bearer"}
       )
 
-   ### --- Error: Authorization 
+   ### --- Error: Authorization
+   # ["El código de estado 403 Forbidden indica que el servidor ha comprendido la solicitud pero se niega a autorizarla,"] #  # noqa: E501
+   @app.exception_handler(AuthorizationError)
+   async def authorization_error_handler(
+      request: Request, exc: AuthorizationError
+   ) -> JSONResponse:
+      return JSONResponse(
+         status_code=status.HTTP_403_FORBIDDEN, 
+         content={"detail": exc.detail}
+      )
 
 
    ### --- Error: Lógica de Negocio 
+   @app.exception_handler(BusinessLogicError)
+   async def business_error_logic(
+      request: Request, exc: BusinessLogicError
+   ) -> JSONResponse:
+      return JSONResponse(
+         status_code=status.HTTP_400_BAD_REQUEST, 
+         content={"detail": exc.detail}
+      )
 
 
-   ### --- Error: Interno de Servidor
-
-
+   ### --- Error: Interno de Servidor (500)
+   @app.exception_handler(Exception)
+   async def unhandled_exception_handler(
+      request: Request, exc: Exception
+   ) -> JSONResponse:
+      logger.error(
+            "unhandled_exception",
+            path=request.url.path, 
+            method=request.method, 
+            error=str(exc),
+            exc_info=True
+         ) 
+      return JSONResponse(
+         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+         content={"detail": "Error Interno del Servidor | Internal Server Error"}
+      )

@@ -40,9 +40,10 @@ def verify_password(plain:str, hashed:str) -> bool:
   return _pwd_context.verify(plain, hashed)
 
 
-#? ─── JWT (JSON Web Token) ────────────────────────────────────────────────────────────────
+#? ─── JWT (JSON Web Token) [Tipado - Seguridad Token] ─────────────────────────────────────────────
 _bearer_scheme = HTTPBearer(auto_error=False)
 
+# === Create & Type Token (Creamos & Tipamos) Token === 
 def _create_token(
     subject: str, # Usuario
     kind: str, # Tipo de Token
@@ -63,9 +64,19 @@ def _create_token(
   return jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
 
+# === Create: Access Token ===
+def access_token(user_id:str, role:str, settings: Settings) -> str:
+  return _create_token(
+    subject=user_id, 
+    kind= "access", 
+    expires_delta=timedelta(minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES), 
+    settings= settings, 
+    extra={"role":role}
+  )
 
-# === Create Access Token ===
-
+# === Create: Refresh Token ===
+def refresh_token(user_id:str, settings:Settings) -> str:
+  pass
 
 # === Decode (Decodificar el Error) Token  | Error Token ===
 

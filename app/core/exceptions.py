@@ -54,4 +54,67 @@ class BusinessLogicError(Exception):
 
 # ─── Handlers | Starlette (Async - FastAPI)  ─────────────────────────────────-
 
+## === Errorers (Excepciones que pueden pasar) al  Registarse (User) | No han tenido éxito (Handler) ===  # noqa: E501
+def register_exception_handler(app: FastAPI) -> None: 
+   
+   ### --- Error: registro 
+   @app.exception_handler(StarletteHTTPException)
+   async def http_exception_handler(
+      request: Request, exc: StarletteHTTPException
+   ) -> JSONResponse:
+    return JSONResponse(
+       status_code=status.status_code, 
+       content={"detail": exc.detail},
+    )
+   
+   ### --- Error: Peticiones / Request
+   @app.exception_handler(RequestValidationError)
+   async def not_found_handler(
+         request: Request, exc: RequestValidationError
+   ) -> JSONResponse: 
+      return JSONResponse(
+         status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, 
+         content={"detail": exc.errors()}, 
+      )
+   
+   ### --- Error: No ha sido encontrado
+   @app.exception_handler(NotFoundError)
+   async def validator_exception_handler(
+      request: Request, exc: NotFoundError
+   ) -> JSONResponse:
+      return JSONResponse(
+         status_code=status.HTTP_404_NOT_FOUND, 
+         content={"detail": str(exc)}
+      )
+   
+   ### --- Error: Conflicto
+   @app.exception_handler(ConflictError)
+   async def conflict_error_handler(
+      request: Request, exc: ConflictError
+   ) -> JSONResponse: 
+      return JSONResponse(
+         status_code=status.HTTP_409_CONFLICT, 
+         content={"detail": exc.detail}
+      )
+
+
+   ### --- Error: Auth (Authentication)
+   @app.exception_handler(AuthenticationError)
+   async def authentication_error_handler(
+      request: Request, exc: AuthenticationError
+   ) -> JSONResponse: 
+      return JSONResponse(
+         status_code=status.HTTP_401_UNAUTHORIZED, 
+         content={"detail": exc.detail}, 
+         headers={"WWW-Authenticate": "Bearer"}
+      )
+
+   ### --- Error: Authorization 
+
+
+   ### --- Error: Lógica de Negocio 
+
+
+   ### --- Error: Interno de Servidor
+
 

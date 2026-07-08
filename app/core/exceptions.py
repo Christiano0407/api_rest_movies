@@ -16,6 +16,9 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 ## ---- Logging (History) ----
+from app.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 # ─── Domain Exceptions ────────────────────────────────────────────────────────
 class NotFoundError(Exception): 

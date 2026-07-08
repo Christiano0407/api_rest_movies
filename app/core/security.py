@@ -141,3 +141,15 @@ class CurrentUser:
   
   require_admin = require_roles("admin")
   require_editor_or_admin = require_roles("admin", "editor")
+
+  def get_refresh_token_cookies(
+      refresh_token: str | None = Cookie(default=None, alias="refresh_token"), 
+      settings: Settings=Depends(get_setting),
+  ) -> dict[str, Any]: 
+    if not refresh_token: 
+      raise AuthenticationError("Refresh Token Ausente")
+    payload = decode_token(refresh_token, settings)
+
+    if payload.get("kind") != "refresh":
+      raise AuthenticationError("Token Inválido - se requiere 'refresh token'")
+    return payload

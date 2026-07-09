@@ -20,7 +20,7 @@ from app.core.logging import get_logger
 
 logger = get_logger(__name__)
 
-# ─── Domain Exceptions ────────────────────────────────────────────────────────
+# ─── Domain Exceptions (Excepciones de Dominio) ───────────────────────────────────────────────────
 class NotFoundError(Exception): 
   def __init__(self, resource: str = "Recurso") -> None:
       self.resource = resource
@@ -63,8 +63,9 @@ def register_exception_handler(app: FastAPI) -> None:
       request: Request, exc: StarletteHTTPException
    ) -> JSONResponse:
     return JSONResponse(
-       status_code=status.HTTP_404_NOT_FOUND, 
-       content={"detail": exc.detail},
+       status_code=exc.status_code, 
+       content={"error": True, "status_code": exc.status_code, "detail": exc.detail},
+       headers=exc.headers
     )
    
    ### --- Error: Peticiones / Request

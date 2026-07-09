@@ -164,7 +164,7 @@ class CurrentUser:
   require_editor_or_admin = require_roles("admin", "editor")
 
   def get_refresh_token_cookies(
-      refresh_token: str | None = Cookie(default=None, alias="refresh_token"), 
+      refresh_token: str | None = Cookie(default=None,  alias="refresh_token"), 
       settings: Settings=Depends(get_settings),
   ) -> dict[str, Any]: 
     if not refresh_token: 

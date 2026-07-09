@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from functools import lru_cache
+from pathlib import Path
 from typing import Literal
 
-from pydantic import AnyHttpUrl, EmailStr, PostgresDsn, RedisDsn, field_validator, model_validator
+from pydantic import AnyHttpUrl, RedisDsn, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -24,14 +25,16 @@ class Settings(BaseSettings):
   ENVIRONMENT: Literal["development", "staging", "production"] = "development"
   DEBUG: bool = False
   LOG_LEVEL: str = "INFO"
+  API_V1_PREFIX: str = "/api/v1"
   
-  # --- Server [Local] --- #
+  # --- Server [Local] | (uvicorn Local) --- #
   HOST: str = "0.0.0.0"
   PORT: int = 8000
   WORKERS: int = 1
   RELOAD: bool = False
   
   # ---- Esto debe coincidir con las variables de entorno de tu docker-compose.yml ---- #
+  # --- PostgreSQL — mismas variables que usa el servicio `postgres` en docker-compose.yml ---
   POSTGRES_USER: str = "postgres"
   POSTGRES_PASSWORD: str = "cinema_db_api_gateway"
   POSTGRES_DB: str = "cinema_db"
@@ -42,12 +45,16 @@ class Settings(BaseSettings):
   DATABASE_URL: str | None = None
   DATABASE_POOL_TIMEOUT: int = 30
   DATABASE_ECHO: bool = False
-  REDIS_URL: RedisDsn = RedisDsn("redis://localhost:6379/0")
-  CACHE_TTL_SECONDS: int = 300 # 5 min Default
+  #REDIS_URL: RedisDsn = RedisDsn("redis://localhost:6379/0")
+  REDIS_URL: str = "redis://redis:6379/0"
+  CACHE_TTL_SECONDS: int = 120 # Default
   
-  # --- JWT (JSON Web Tokens) --- #
+  # --- JWT (JSON Web Tokens) | RS256 asimétrico (ver nota en core/security.py sobre por qué no HS256) --- #  # noqa: E501
   JWT_SECRET_KEY: str = "CHANGE_ME_IN_PRODUCTION_use_32+_random_chars"
-  JWT_ALGORITHM: str = "HS256"
+  #JWT_ALGORITHM: str = "HS256" 
+  JWT_PRIVATE_KEY_PATH: str = "/app/keys/private.pem"
+  JWT_PUBLIC_KEY_PATH: str = "/app/keys/public.pem"
+  JWT_ALGORITHM: str = "RS256"
   JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
   JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
@@ -63,19 +70,40 @@ class Settings(BaseSettings):
   CORS_ALLOW_CREDENTIALS: bool = True
 
   # --- Rate Limiting (Límite de 'Request' / Peticiones) --- #
+  # Rate limiting por rol (peticiones/minuto) — RBAC + Redis INCR/EXPIRE #
   RATE_LIMIT_PUBLIC: int = 30 # req/min
   RATE_LIMIT_AUTH: int = 10 # req/min
+  RATE_LIMITS_PER_MINUTE: dict[str, int] = {
+        "Admin": 1000,
+        "Manager": 500,
+        "Editor": 300,
+        "Moderator": 300,
+        "Premium": 120,
+        "User": 60,
+    }
 
   # --- DB: MinIO / Storage s3 --- #
 
   # --- Celery / ARQ (ETL async) --- # 
 
-  ## ── Docs | DLCS ─────────────────────────────────────────────────────────────────
+  # --- TMDB (API Movies) --- #
+  TMDB_BASE_URL: str = "https://api.themoviedb.org/3"
+  TMDB_API_KEY: str = ""
+
+  ## ── Docs | DLCS | Propiedades ─────────────────────────────────────────────────────────────────
   @property
   def docs_enable(self) -> bool:
       return self.ENVIRONMENT in ("development", "staging")
+  
+  @property
+  def jwt_private_key(self) -> str:
+      return Path(self.JWT_PRIVATE_KEY_PATH).read_text()
+  
+  @property
+  def jwt_public_key(self) -> str:
+      return Path(self.JWT_PUBLIC_KEY_PATH).read_text()
 
-  ## ── Validators ───────────────────────────────────────────────────────────
+  ## ── Validators ───────────────────────────────────────────────────────────----------------------
   # --- Database URL (2) --- #
   @model_validator(mode="after")
   def _build_database_url(self) -> Settings:

@@ -23,6 +23,8 @@ def configure_logging(log_level:str="INFO", environment:str="development") -> No
         structlog.processors.StackInfoRenderer(),
     ]
 
+    renderer: structlog.types.Processor
+
     if environment == "development": 
         renderer : structlog.types.Processor = structlog.dev.ConsoleRenderer(colors=True)
     else:
@@ -51,6 +53,8 @@ def configure_logging(log_level:str="INFO", environment:str="development") -> No
     handler.setFormatter(formatter)
 
     root_logger = logging.getLogger()
+    # Evita handlers duplicados si configure_logging() se llama más de una vez (ej. en tests).
+    root_logger.handlers.clear()
     root_logger.addHandler(handler)
     root_logger.setLevel(getattr(logging, log_level.upper(), logging.INFO)) # --- Log History ---
 
@@ -58,7 +62,7 @@ def configure_logging(log_level:str="INFO", environment:str="development") -> No
           logging.getLogger(lib).setLevel(logging.WARNING)
 
 
-
 ## === See Logging - History | Event - streaming === 
+# --- Nivel de módulo (NO anidada dentro de configure_logging) ---
 def get_logger(name:str | None = None) -> structlog.stdlib.BoundLogger: 
         return structlog.get_logger(name)

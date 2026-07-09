@@ -12,6 +12,15 @@
     # =======  
     Claims: 
       -  # Payload: Claims [Es un objeto JSON codificado en Base64 que almacena pares clave-valor.]
+    # ------------------------------------------------------------------------------------------- #
+    # --- Nivel de módulo (NO anidada dentro de configure_logging) ---
+    Nota de arquitectura: se evaluó migrar a HS256 + python-jose + refresh en cookies,
+    pero se descartó — HS256 requiere distribuir un secreto compartido a cada servicio
+    que necesite *verificar* tokens, mientras que RS256 permite publicar la llave pública
+    libremente (relevante en un patrón Gateway, donde otros servicios podrían necesitar
+    verificar sin poder emitir). python-jose además tiene menos mantenimiento activo que
+    PyJWT. Se mantiene lo ya probado end-to-end (19/19 tests, Docker, CI).
+
 """
 
 from __future__ import annotations
@@ -19,6 +28,9 @@ from __future__ import annotations
 import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Any
+
+import bcrypt
+import jwt
 
 from fastapi import Cookie, Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -31,6 +43,10 @@ from app.core.exceptions import AuthenticationError, AuthorizationError
 
 
 #? ─── Hash | Hashing | Hashed | Bcrypt) ───────────────────────────────────────────────────────────
+
+_BCRYPT_MAX_BYTES = 72 # bcrypt trunca en silencio lo que exceda esto; se valida también en el schema.  # noqa: E501
+
+
 _pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def hash_password(plain:str) -> str:

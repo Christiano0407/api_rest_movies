@@ -63,7 +63,7 @@ def register_exception_handler(app: FastAPI) -> None:
       request: Request, exc: StarletteHTTPException
    ) -> JSONResponse:
     return JSONResponse(
-       status_code=status.status_code, 
+       status_code=status.HTTP_404_NOT_FOUND, 
        content={"detail": exc.detail},
     )
    

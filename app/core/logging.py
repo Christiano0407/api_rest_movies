@@ -57,9 +57,8 @@ def configure_logging(log_level:str="INFO", environment:str="development") -> No
     for lib in ("uvicorn.access", "sqlalchemy.engine", "async"):
           logging.getLogger(lib).setLevel(logging.WARNING)
 
-      
 
 
 ## === See Logging - History | Event - streaming === 
-    def get_logger(name:str | None = None) -> structlog.stdlib.BoundLogger: 
-         return structlog.get_logger(name)
+def get_logger(name:str | None = None) -> structlog.stdlib.BoundLogger: 
+        return structlog.get_logger(name)

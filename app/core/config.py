@@ -86,21 +86,20 @@ class Settings(BaseSettings):
                 f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
             )
     return self
-  
-settings = Settings()
 
-@field_validator("JWT_SECRET_KEY")
-@classmethod
-def validator_secret_key(cls, v:str) -> str:
-    if len(v) <32:
-          raise ValueError("jwt_secret_key must be at least 32 characters (Debe tener al menos 32 caracteres.)")
-    return v
+  @field_validator("JWT_SECRET_KEY")
+  @classmethod
+  def validator_secret_key(cls, v:str) -> str:
+      if len(v) <32:
+        raise ValueError("" \
+        "jwt_secret_key must be at least 32 characters (Debe tener al menos 32 caracteres.)")
+      return v
 
-@model_validator(mode="after")
-def secure_cookie_in_production(self) -> Settings:
-    if self.ENVIRONMENT == "production" and not self.REFRESH_COOKIE_SECURE:
+  @model_validator(mode="after")
+  def secure_cookie_in_production(self) -> Settings:
+      if self.ENVIRONMENT == "production" and not self.REFRESH_COOKIE_SECURE:
         raise ValueError("REFRESH_COOKIE_SECURE must be True in production")
-    return self
+      return self
 
 ## ---- Cache ----
 @lru_cache(maxsize=1)

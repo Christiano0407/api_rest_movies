@@ -25,7 +25,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 
-from app.core.config import Settings, get_setting
+from app.core.config import Settings, get_settings
 from app.core.exceptions import AuthenticationError, AuthorizationError
 
 
@@ -106,7 +106,7 @@ class CurrentUser:
 
   def _get_current_user(
       credentials: HTTPAuthorizationCredentials | None = Depends(_bearer_scheme),
-      settings: Settings = Depends(get_setting), 
+      settings: Settings = Depends(get_settings), 
   ) -> CurrentUser: 
     if not credentials: 
       raise AuthenticationError("Credenciales Inválidas o han expirado | Tiempo del Token expiró")
@@ -144,7 +144,7 @@ class CurrentUser:
 
   def get_refresh_token_cookies(
       refresh_token: str | None = Cookie(default=None, alias="refresh_token"), 
-      settings: Settings=Depends(get_setting),
+      settings: Settings=Depends(get_settings),
   ) -> dict[str, Any]: 
     if not refresh_token: 
       raise AuthenticationError("Refresh Token Ausente")

@@ -104,6 +104,7 @@ class Settings(BaseSettings):
       return Path(self.JWT_PUBLIC_KEY_PATH).read_text()
 
   ## ── Validators ───────────────────────────────────────────────────────────----------------------
+  
   # --- Database URL (2) --- #
   @model_validator(mode="after")
   def _build_database_url(self) -> Settings:
@@ -127,6 +128,13 @@ class Settings(BaseSettings):
   def secure_cookie_in_production(self) -> Settings:
       if self.ENVIRONMENT == "production" and not self.REFRESH_COOKIE_SECURE:
         raise ValueError("REFRESH_COOKIE_SECURE must be True in production")
+      return self
+  
+  @model_validator(mode="after")
+  def _validate_production_settings(self) -> Settings:
+      if self.ENVIRONMENT == "production" and self.POSTGRES_PASSWORD == "cinema_db_api_gateway": 
+          raise ValueError(
+              "POSTGRES_PASSWORD, debe de cambiarse antes de desplegar a production (Deploy)")
       return self
 
 ## ---- Cache ----

@@ -75,7 +75,7 @@ def register_exception_handler(app: FastAPI) -> None:
    ) -> JSONResponse: 
       return JSONResponse(
          status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, 
-         content={"detail": exc.errors()}, 
+         content={"error": True, "status_code": 422, "detail": exc.errors()}, 
       )
    
    ### --- Error: No ha sido encontrado
@@ -85,7 +85,7 @@ def register_exception_handler(app: FastAPI) -> None:
    ) -> JSONResponse:
       return JSONResponse(
          status_code=status.HTTP_404_NOT_FOUND, 
-         content={"detail": str(exc)}
+         content={"error": True, "status_code": 404, "detail": str(exc)}
       )
    
    ### --- Error: Conflicto
@@ -95,7 +95,7 @@ def register_exception_handler(app: FastAPI) -> None:
    ) -> JSONResponse: 
       return JSONResponse(
          status_code=status.HTTP_409_CONFLICT, 
-         content={"detail": exc.detail}
+         content={"error": True, "status_code": 404, "detail": exc.detail}
       )
 
 
@@ -106,8 +106,8 @@ def register_exception_handler(app: FastAPI) -> None:
    ) -> JSONResponse: 
       return JSONResponse(
          status_code=status.HTTP_401_UNAUTHORIZED, 
-         content={"detail": exc.detail}, 
-         headers={"WWW-Authenticate": "Bearer"}
+         content={"error":True, "status_code": 401, "detail": exc.detail}, 
+         headers={"WWW-Authenticate": "Bearer"},
       )
 
    ### --- Error: Authorization
@@ -118,7 +118,7 @@ def register_exception_handler(app: FastAPI) -> None:
    ) -> JSONResponse:
       return JSONResponse(
          status_code=status.HTTP_403_FORBIDDEN, 
-         content={"detail": exc.detail}
+         content={"error":True, "status_code": 403,"detail": exc.detail}
       )
 
 
@@ -129,7 +129,7 @@ def register_exception_handler(app: FastAPI) -> None:
    ) -> JSONResponse:
       return JSONResponse(
          status_code=status.HTTP_400_BAD_REQUEST, 
-         content={"detail": exc.detail}
+         content={"error":True, "status_code": 400, "detail": exc.detail}
       )
 
 
@@ -143,9 +143,11 @@ def register_exception_handler(app: FastAPI) -> None:
             path=request.url.path, 
             method=request.method, 
             error=str(exc),
-            exc_info=True
+            exc_info=True,
          ) 
       return JSONResponse(
          status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
-         content={"detail": "Error Interno del Servidor | Internal Server Error"}
+         content={
+            "error":True, "status_code": 500, 
+            "detail": "Error Interno del Servidor | Internal Server Error"}
       )

@@ -19,6 +19,7 @@ from app.core.config import settings
 from app.core.exceptions import AuthenticationError, AuthorizationError
 from app.core.security import decode_token
 from app.enums import RoleEnum
+from app.db.session import get_db
 
 # redis_client | session | models: token_blocklist & user
 

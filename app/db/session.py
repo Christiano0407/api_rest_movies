@@ -26,7 +26,7 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker, 
     create_async_engine,
 )
-from sqlalchemy.pool import NullPool
+#from sqlalchemy.pool import NullPool
 
 from app.core.config import Settings, get_settings
 from app.core.logging import get_logger

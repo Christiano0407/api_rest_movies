@@ -32,7 +32,10 @@ from app.core.config import Settings, get_settings
 from app.core.logging import get_logger
 
 
+## --- Logging (History Process) --- #
 logger = get_logger(__name__)
 
+## === Singleton Pattern (Add) === ##
+# [Sólo existirá 1 Engine & 1 Session factory en la vida de la aplicación | No se recrean]
 _engine: AsyncEngine | None = None
 _session_factory: async_sessionmaker[AsyncSession] | None = None

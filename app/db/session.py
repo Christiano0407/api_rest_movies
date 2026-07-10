@@ -58,8 +58,26 @@ def get_engine(settings:Settings | None = None) -> AsyncEngine:
   return _engine
 
 def get_session_factory(
-    settings: Settings | None = None
+    settings: Settings | None = None,
 ) -> async_sessionmaker[AsyncSession]: 
   global _session_factory
 
-  pass
+  if _session_factory is None: 
+      
+    _session_factory = async_sessionmaker(
+      bind=get_engine(settings),
+      class_=AsyncSession, 
+      expire_on_commit=False, 
+      autoFlush=False,
+    )
+
+  return _session_factory
+
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
+  """
+    Dependency de FastAPI.
+    Únicamente crea y libera la sesión.
+    No controla transacciones.
+  """
+  async with get_session_factory()() as session:
+    yield session

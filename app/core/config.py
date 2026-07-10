@@ -43,7 +43,9 @@ class Settings(BaseSettings):
   
   # --- Database URL | Cache --- #
   DATABASE_URL: str | None = None
+  DATABASE_POOL_SIZE: int = 20
   DATABASE_POOL_TIMEOUT: int = 30
+  DATABASE_MAX_OVERFLOW: int = 10
   DATABASE_ECHO: bool = False
   #REDIS_URL: RedisDsn = RedisDsn("redis://localhost:6379/0")
   REDIS_URL: str = "redis://redis:6379/0"
@@ -102,6 +104,13 @@ class Settings(BaseSettings):
   @property
   def jwt_public_key(self) -> str:
       return Path(self.JWT_PUBLIC_KEY_PATH).read_text()
+  
+  @property
+  def db_url_str(self) -> str: 
+      return (
+        f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
+        f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+      )
 
   ## ── Validators ───────────────────────────────────────────────────────────----------------------
   

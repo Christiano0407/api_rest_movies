@@ -56,3 +56,10 @@ def get_engine(settings:Settings | None = None) -> AsyncEngine:
       echo=cfg.DATABASE_ECHO, 
     )
   return _engine
+
+def get_session_factory(
+    settings: Settings | None = None
+) -> async_sessionmaker[AsyncSession]: 
+  global _session_factory
+
+  pass

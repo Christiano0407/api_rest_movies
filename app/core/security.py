@@ -36,8 +36,9 @@ from fastapi import Cookie, Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from passlib.context import CryptContext
 
-from app.core.config import Settings, get_settings
+from app.core.config import settings
 from app.core.exceptions import AuthenticationError, AuthorizationError
+from app.enums import RoleEnum
 
 
 
@@ -68,8 +69,7 @@ def _create_token(
     subject: str, # Usuario
     role: str, # Role (RBAC)
     token_type: str, # Tipo de Token
-    expires_delta: timedelta, # Fecha de Expiración
-    settings: Settings, # Datos: DB & key Access - 
+    expires_delta: timedelta, # Fecha de Expiración 
     extra: dict[str, Any] | None = None,
 ) ->  tuple[str, str]:
   jti = str(uuid.uuid4()) # Tipando | Clave única - uuid 
@@ -89,27 +89,25 @@ def _create_token(
 
 
 # === Create: Access Token ===
-def access_token(user_id:str, role:str, settings: Settings) -> tuple[str,str]:
+def access_token(user_id:str, role:str) -> tuple[str,str]:
   return _create_token(
     subject=user_id, 
     role=role,
     token_type= "access", 
     expires_delta=timedelta(minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES), 
-    settings=settings, 
   )
 
 # === Create: Refresh Token ===
-def refresh_token(subject:str, role:str, settings:Settings) -> tuple[str,str]:
+def refresh_token(subject:str, role:str) -> tuple[str,str]:
   return _create_token(
     subject=subject, 
     role=role,
     token_type="refresh",
     expires_delta=timedelta(days=settings.JWT_REFRESH_TOKEN_EXPIRE_DAYS),
-    settings=settings,
   )
 
 # === Decode (Decodificar el Error) Token  | Error Token ===
-def decode_token(token:str, settings:Settings) -> dict[str, Any]: 
+def decode_token(token:str) -> dict[str, Any]: 
   return jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
 
 #? ─── FastAPI Dependencies ────────────────────────────────────────────────────
@@ -124,24 +122,33 @@ class CurrentUser:
   def __init__(self, user_id:str, role:str) -> None:
     self.user_id = user_id
     self.role = role
-
+  
+  @staticmethod
   def _get_current_user(
       credentials: HTTPAuthorizationCredentials | None = Depends(_bearer_scheme),
-      settings: Settings = Depends(get_settings), 
   ) -> CurrentUser: 
     if not credentials: 
       raise AuthenticationError("Credenciales Inválidas o han expirado | Tiempo del Token expiró")
-    payload = decode_token(credentials.credentials, settings)
+    
+    payload = decode_token(credentials.credentials)
+    
     if payload.get("type_token") != "access":
         raise AuthenticationError("Token Inválido - Se requiere access token")
+
+    role = payload.get("role")
+    if role is None:
+      raise AuthenticationError("Token Inválido - Se requiere access token")
+    
     return CurrentUser(user_id=payload["sub"], role=payload.get("role", "reader"))
   
+  @staticmethod
   def get_current_user(
       user: CurrentUser=Depends(_get_current_user)
   ) -> CurrentUser:
     return user
   
-  def require_roles(*roles:str): 
+  @staticmethod
+  def require_roles(*roles:RoleEnum): 
     """
         Factory that returns a dependency enforcing role membership.(Fábrica que devuelve 
         una dependencia que impone la membresía del rol.)
@@ -151,26 +158,31 @@ class CurrentUser:
         - 403 Forbidden indica que el servidor entiende la solicitud pero niega 
             el acceso porque el cliente carece de los permisos necesarios.
     """
-    def _dep(user:CurrentUser = Depends(get_current_user)) -> CurrentUser:
-      if user.role not in roles: 
+    allowed = {role.value for role in roles}
+
+    def _dep(user:CurrentUser = Depends(CurrentUser.get_current_user)) -> CurrentUser:
+      if user.role not in allowed: 
         raise AuthorizationError(
           "Acceso denegado | el token es inválido, está ausente o carece de los permisos necesarios"
         )
       return user
       
     return _dep
-  
-  require_admin = require_roles("admin")
-  require_editor_or_admin = require_roles("admin", "editor")
 
+  @staticmethod
   def get_refresh_token_cookies(
       refresh_token: str | None = Cookie(default=None,  alias="refresh_token"), 
-      settings: Settings=Depends(get_settings),
   ) -> dict[str, Any]: 
     if not refresh_token: 
       raise AuthenticationError("Refresh Token Ausente")
-    payload = decode_token(refresh_token, settings)
+    
+    payload = decode_token(refresh_token)
 
-    if payload.get("kind") != "refresh":
+    if payload.get("type") != "refresh":
       raise AuthenticationError("Token Inválido - se requiere 'refresh token'")
     return payload
+
+
+    
+require_admin = CurrentUser.require_roles(RoleEnum.ADMIN)
+require_editor_or_admin = CurrentUser.require_roles(RoleEnum.ADMIN, RoleEnum.EDITOR)

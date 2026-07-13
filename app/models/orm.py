@@ -99,3 +99,21 @@ class TMDBSessions(Base):
 
 
 # ---- token_blocklist ---- #
+class TokenBlocklist(Base): 
+  __tablename__ = "token_blocklist"
+
+  id: Mapped[int] = mapped_column(primary_key=True)
+  jti: Mapped[str] = mapped_column(
+    String(255), 
+    nullable=False, 
+    unique=True, 
+    index=True
+  )
+  exp: Mapped[datetime] = mapped_column(
+    DateTime(timezone=True),
+    nullable=False
+  )
+  blocked_at: Mapped[datetime] = mapped_column(
+    DateTime(timezone=True), 
+    server_default=func.now()
+  )

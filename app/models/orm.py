@@ -22,7 +22,7 @@ from sqlalchemy import (
 )
 
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy.orm import DeclarativeBase, Mapped, relationship, mapped_column
 
 from app.db.base import Base
 from app.enums import RoleEnum
@@ -69,6 +69,33 @@ class Users(Base):
     onupdate=func.now(),
   )
 
+
 # ----  tmdb_sessions  ---- #
+class TMDBSessions(Base):
+  __tablename__ = "tmdb_sessions"
+
+  id: Mapped[int] = mapped_column(primary_key=True)
+  user_id: Mapped[str] = mapped_column(
+    ForeignKey("users.id", ondelete="CASCADE"),
+    nullable=False,
+    unique=True, 
+    index=True,
+  )
+  tmdb_account_id: Mapped[str] = mapped_column(
+    String(100), 
+    nullable=False,
+  )
+  tmdb_session_id: Mapped[str] = mapped_column(
+    String(255), 
+    nullable=False,
+  )
+  connected_at: Mapped[datetime] = mapped_column(
+    DateTime(timezone=True), 
+    server_default=func.now(),
+  )
+  users: Mapped["Users"] = relationship(
+    back_popular="tmdb_sessions"
+  )
+
 
 # ---- token_blocklist ---- #

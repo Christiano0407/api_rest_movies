@@ -20,8 +20,9 @@ from app.core.exceptions import AuthenticationError, AuthorizationError
 from app.core.security import decode_token
 from app.enums import RoleEnum
 from app.db.session import get_db
+from app.models.orm import Users, TMDBSessions, TokenBlocklist
 
-# redis_client | session | models: token_blocklist & user
+# redis_client |
 
 # AUTH - Bearer
 oath2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_PREFIX}/auth/login")

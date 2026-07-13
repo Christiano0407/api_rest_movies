@@ -1,0 +1,14 @@
+from datetime import datetime
+from pydantic import BaseModel, ConfigDict
+
+class TokenBlockListCreate(BaseModel):
+  jti: str
+  exp: datetime
+
+
+class TokenBlockListResponse(BaseModel):
+  model_config = ConfigDict(from_attributes=True)
+  id: int
+  jti: str
+  exp: datetime
+  blocked_at: datetime

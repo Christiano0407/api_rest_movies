@@ -20,7 +20,7 @@ from app.core.exceptions import AuthenticationError, AuthorizationError
 from app.core.security import decode_token
 from app.enums import RoleEnum
 from app.db.session import get_db
-from app.models.orm import Users, TMDBSessions, TokenBlocklist
+from app.models.orm import Users, TMDBSessions, TokenBlocklist  
 
 # redis_client |
 

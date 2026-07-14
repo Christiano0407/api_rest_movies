@@ -3,6 +3,7 @@
   Revision ID: 0001_initial_schema
   Revises:
   Create Date: 2026-07-01
+  Architecture: FastAPI + SQLAlchemy + Alembic + PostgreSQL.
 """
 
 from typing import Sequence, Union

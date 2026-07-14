@@ -9,6 +9,7 @@
 """  # noqa: E501
 
 import jwt
+from collections.abc import AsyncGenerator
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import ValidationError
@@ -58,8 +59,20 @@ async def get_current_user(
 
 
 def require_roles(*roles: RoleEnum):
-  pass 
+  """Factory que arma un dependency de RBAC. Uso: Depends(require_roles(RoleEnum.ADMIN))"""
+  allowed = {
+    role.value for role in roles
+  }
+
+  def _dependency(user: Users = Depends(get_current_user)) -> Users:
+    if user.role.value not in allowed:
+      raise AuthorizationError()
+    return user
+  
+require_admin = require_roles(RoleEnum.ADMIN)
+require_editor_or_admin = require_roles(RoleEnum.ADMIN, RoleEnum.EDITOR)
 
 
-async def get_redis_dep() -> Redis:
-  pass
+async def get_redis_dep() -> AsyncGenerator[Redis, None]:
+  async for conn in get_redis():
+    yield conn

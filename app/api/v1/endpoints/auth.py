@@ -45,3 +45,16 @@ from app.schemas.user import (
   UserUpdate,
 )
 
+
+
+async def register_user(db:AsyncSession, payload: UserResponse) -> Users:
+  existing = await db.scalar(
+    select(Users).where((Users.user_name == payload.username) | (Users.email == payload.email))
+  )
+  if existing is not None: 
+    raise ConflictError("El username o email ya está registrado")
+  user = Users(username=payload.username, email=payload.email)
+  db.add(user)
+  await db.commit()
+  amailob_refresh(user)
+  return user

@@ -90,10 +90,10 @@ class Settings(BaseSettings):
 
   # --- TMDB (API Movies) --- #
   TMDB_BASE_URL: str = "https://api.themoviedb.org/3"
-  TMDB_API_KEY: str 
-  TMDB_ACCESS_TOKEN: str
-  TMDB_TIMEOUT_SECONDS: int=10
-  TMDB_MAX_RETRIES: int=3
+  TMDB_API_KEY: str = ""
+  TMDB_ACCESS_TOKEN: str = ""
+  TMDB_TIMEOUT_SECONDS: int = 10
+  TMDB_MAX_RETRIES: int = 3
 
   ## ── Docs | DLCS | Propiedades ─────────────────────────────────────────────────────────────────
   @property

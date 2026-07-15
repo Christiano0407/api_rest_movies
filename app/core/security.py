@@ -58,7 +58,7 @@ def hash_password(plain_password: str) -> str:
 
 def verify_password(plain_password:str, hashed:str) -> bool:
   secret = plain_password.encode("utf-8")[:_BCRYPT_MAX_BYTES]
-  return bcrypt.checkpw(secret, plain_password.encode("utf-8"))
+  return bcrypt.checkpw(secret, hashed.encode("utf-8"))
 
 
 #? ─── JWT (JSON Web Token) [Tipado - Seguridad Token] ─────────────────────────────────────────────
@@ -132,7 +132,7 @@ class CurrentUser:
     
     payload = decode_token(credentials.credentials)
     
-    if payload.get("type_token") != "access":
+    if payload.get("type") != "access":
         raise AuthenticationError("Token Inválido - Se requiere access token")
 
     role = payload.get("role")

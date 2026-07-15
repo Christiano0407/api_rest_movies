@@ -32,14 +32,14 @@ class HealthOut(BaseModel):
 
 
 # ─── Create ─────────────────────────────────────────────────────────────────────
-class UserCreate(BaseModel): 
+class UserRegister(BaseModel): 
   username: str = Field(min_length=3, max_length=50)
-  email: EmailStr
+  email: EmailStr = Field(examples=["dev@startup.com"])
   password: str = Field(min_length=8, max_length=128)
 
 
 # ─── Update ─────────────────────────────────────────────────────────────────────
-class userUpdate(BaseModel):
+class UserUpdate(BaseModel):
   username: str | None = Field(default=None, min_length=3, max_length=50)
   email: EmailStr | None = None
   is_active: bool | None = None
@@ -47,7 +47,7 @@ class userUpdate(BaseModel):
 
 
 # ─── Response ─────────────────────────────────────────────────────────────────────
-class userResponse(BaseModel):
+class UserResponse(BaseModel):
   model_config = ConfigDict(from_attributes=True)
   id: int
   username: str

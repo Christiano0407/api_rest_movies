@@ -90,7 +90,7 @@ async def refresh_access_token(
     if result.scalar_one_or_none():
         raise AuthenticationError("Token ya fue revocado")
 
-    user_id = payload.get("sub")
+    user_id: str = payload.get("sub", "")
     result = await db.execute(select(Users).where(Users.id == int(user_id)))
     user = result.scalar_one_or_none()
 
@@ -135,9 +135,9 @@ async def logout_user(
     if payload.get("type") != "refresh":
         raise AuthenticationError("Token inválido - se requiere refresh token")
 
-    jti = payload.get("jti")
+    jti: str = payload.get("jti", "")
     user_id = int(payload.get("sub", 0))
-    exp = payload.get("exp", 0)
+    exp: int = payload.get("exp", 0)
 
     await revoke_token(jti, "refresh", user_id, exp, db)
     logger.info("user_logged_out", user_id=user_id)

@@ -49,7 +49,7 @@ async def get_current_user(
   if blocked is not None:
     raise AuthenticationError("Usuario Inválido")
  
-  user = await db.scalar(select(Users).where(Users.user_name == payload.get("sub")))
+  user = await db.scalar(select(Users).where(Users.username == payload.get("sub")))
   if user is None or not user.is_active:
     raise AuthenticationError("Usuario Inválido o Inactivo | Activa tu cuenta")
   

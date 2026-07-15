@@ -29,15 +29,19 @@ from app.schemas.auth import (
   LoginRequest, 
   RegisterRequest, 
   TokenResponse,
+  RefreshTokenRequest,
 )
 from app.schemas.tmdb_session import (
   TMDBSessionResponse, 
 )
-from app.schemas.token_blocklist import (
+from schemas.tmdb_token_blocklist import (
   TokenBlockListResponse,
+  TMDBRequestTokenResponse, 
+  TMDBLinkPayload,
 )
 from app.schemas.user import (
   UserResponse,
   UserResponse, 
   UserUpdate,
 )
+

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from app.core.config import Settings, get_settings
 from app.models.orm import (
   TMDBSessions,
@@ -14,6 +15,6 @@ class TMDBClient:
   def __init__(
       self, 
       api_key: str, 
-      base_url: str,  
+      base_url: str, 
   ) -> GatewayPaginationResponse:
   pass

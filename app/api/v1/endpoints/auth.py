@@ -96,3 +96,12 @@ async def login_user(
   refresh_tokens, _ = refresh_token(subject=user.username, role=user.role)
 
   return TokenResponse(access_token=access_tokens, refresh_token=refresh_tokens)
+
+
+@router.post("/refresh", response_model=TokenResponse)
+async def refresh_token(
+  payload: RefreshTokenRequest,
+  db: AsyncSession = Depends(get_db)
+) -> TokenResponse:
+  """Rotación de Refresh Token: valida, revoca el usado (blocklist) y emite un par nuevo."""
+  pass

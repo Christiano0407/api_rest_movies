@@ -60,7 +60,7 @@ async def login_user(
     if not user.is_active:
         raise AuthenticationError("User Inactive (Usuario Inactivo)")
 
-    access_jwt, _ = access_token(user_id=user.username, role=user.role)
+    access_jwt, _ = access_token(subject=user.username, role=user.role)
     refresh_jwt, _ = create_refresh_token(subject=user.username, role=user.role)
 
     return TokenResponse(access_token=access_jwt, refresh_token=refresh_jwt)
@@ -83,24 +83,28 @@ async def refresh_access_token(
     except ValidationError as exc:
         raise _invalid() from exc
 
-    if decoded.get("type") != "refresh":
+    token_type: str = decoded.get("type", "")
+    if token_type != "refresh":
         raise _invalid()
 
+    jti: str = decoded.get("jti", "")
     already_used = await db.scalar(
-        select(TokenBlocklist).where(TokenBlocklist.jti == decoded.get("jti"))
+        select(TokenBlocklist).where(TokenBlocklist.jti == jti)
     )
     if already_used is not None:
         raise _invalid()
 
-    user = await db.scalar(select(Users).where(Users.username == decoded.get("sub")))
+    sub: str = decoded.get("sub", "")
+    user = await db.scalar(select(Users).where(Users.username == sub))
     if user is None or not user.is_active:
         raise _invalid()
 
+    exp: int = decoded.get("exp", 0)
     db.add(TokenBlocklist(
-        jti=decoded.get("jti"),
+        jti=jti,
         token_type="refresh",
-        user_id=user.id,
-        expires_at=datetime.fromtimestamp(decoded.get("exp"), tz=UTC),
+        subject=user.id,
+        expires_at=datetime.fromtimestamp(exp, tz=UTC),
         revoked_at=datetime.now(tz=UTC),
     ))
     await db.commit()

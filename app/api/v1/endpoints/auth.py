@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
 import jwt
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
@@ -104,4 +105,34 @@ async def refresh_token(
   db: AsyncSession = Depends(get_db)
 ) -> TokenResponse:
   """Rotación de Refresh Token: valida, revoca el usado (blocklist) y emite un par nuevo."""
-  pass
+
+  def _invalid() -> AuthenticationError: 
+    return AuthenticationError("Refresh Token Inválido o Revocado")
+  
+  try: 
+    decoded = decode_token(payload.refresh_token)
+  except jwt.PyJWTError as exc:
+    raise _invalid() from exc
+  except ValidationError as exc:
+    raise _invalid() from exc
+  
+  if decoded.get("type") != "refresh":
+    raise _invalid()
+  
+  already_used = await db.scalar(select(TokenBlocklist).where(TokenBlocklist.jti == decoded.get("jti")))
+  if already_used is not None: 
+    raise _invalid()
+  
+  user = await db.scalar(select(Users).where(Users.username == decoded.get("sub")))
+  if user is None or not user.is_active: 
+    raise _invalid()
+  
+  """ db.add(TokenBlocklist(
+    jti=decoded.get("jti"), 
+    expires_at=datetime.fromtimestamp(decoded.),
+    Timezone=timezone.utc
+    )) """
+  
+  # access_token
+  # refresh_token
+  # return Tokenschema

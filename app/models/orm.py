@@ -45,7 +45,6 @@ class TMDBSessions(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
-
     user: Mapped["Users"] = relationship("Users", back_populates="tmdb_sessions")
 
 
@@ -62,5 +61,4 @@ class TokenBlocklist(Base):
     revoked_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
-
     user: Mapped["Users"] = relationship("Users", back_populates="token_blocklist")

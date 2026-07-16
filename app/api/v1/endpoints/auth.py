@@ -30,6 +30,7 @@ from app.schemas.auth import (
   RegisterRequest, 
   TokenResponse,
   RefreshTokenRequest,
+  UserRegister,
 )
 from app.schemas.tmdb_session import (
   TMDBSessionResponse, 
@@ -40,21 +41,31 @@ from schemas.tmdb_token_blocklist import (
   TMDBLinkPayload,
 )
 from app.schemas.user import (
-  UserResponse,
   UserResponse, 
   UserUpdate,
 )
 
+from app.services.tmdb_client import TMDBClient
 
 
-async def register_user(db:AsyncSession, payload: UserResponse) -> Users:
+router = APIRouter(prefix="/auth", tags=["Identity & Access"])
+
+@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+async def register_user(payload:UserRegister , db: AsyncSession = Depends(get_db)) -> Users:
   existing = await db.scalar(
-    select(Users).where((Users.user_name == payload.username) | (Users.email == payload.email))
+    select(Users).where((Users.username == payload.username) | (Users.email == payload.email))
   )
-  if existing is not None: 
-    raise ConflictError("El username o email ya está registrado")
-  user = Users(username=payload.username, email=payload.email)
+  if existing is None: 
+    raise HTTPException(
+      status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, 
+      detail="The User or Email existed | El username & email ya existe"
+    )
+  user = Users(
+    username=payload.username, 
+    email=payload.email, 
+    hashed_password=hash_password(payload.password),
+  )
   db.add(user)
   await db.commit()
-  amailob_refresh(user)
+  await db.refresh(user)
   return user

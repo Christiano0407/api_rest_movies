@@ -120,6 +120,7 @@ async def revoke_token(
         token_type=token_type,
         user_id=user_id,
         expires_at=datetime.fromtimestamp(expires_at, tz=UTC) if expires_at else datetime.now(tz=UTC),
+        revoked_at=datetime.now(tz=UTC),
     )
     db.add(entry)
     await db.commit()

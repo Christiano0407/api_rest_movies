@@ -135,3 +135,6 @@ async def logout(
         exp=datetime.fromtimestamp(exp, tz=UTC),
         ))
     await db.commit()
+
+
+## ---- Vinculación de cuenta real de TMDB (requerido por /account/watchlist) ----- ##

@@ -50,6 +50,7 @@ from app.services.tmdb_client import TMDBClient
 
 router = APIRouter(prefix="/auth", tags=["Identity & Access"])
 
+
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def register_user(
   payload:UserRegister , 

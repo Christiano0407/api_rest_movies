@@ -51,21 +51,47 @@ from app.services.tmdb_client import TMDBClient
 router = APIRouter(prefix="/auth", tags=["Identity & Access"])
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-async def register_user(payload:UserRegister , db: AsyncSession = Depends(get_db)) -> Users:
+async def register_user(
+  payload:UserRegister , 
+  db: AsyncSession = Depends(get_db)
+  ) -> Users:
   existing = await db.scalar(
     select(Users).where((Users.username == payload.username) | (Users.email == payload.email))
   )
+  
   if existing is None: 
     raise HTTPException(
       status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, 
       detail="The User or Email existed | El username & email ya existe"
     )
+  
   user = Users(
     username=payload.username, 
     email=payload.email, 
     hashed_password=hash_password(payload.password),
   )
+  
   db.add(user)
   await db.commit()
   await db.refresh(user)
+  
   return user
+
+
+@router.post("/login", response_model=TokenResponse)
+async def login_user(
+  form_data: OAuth2PasswordRequestForm = Depends(),
+  db: AsyncSession = Depends(get_db)
+) -> TokenResponse:
+  user = await db.scalar(select(Users).where(Users.username == form_data.username))
+  
+  if user is None or not verify_password(form_data.password, user.hashed_password):
+    raise AuthenticationError("Credenciales Inválidas | Han expirado")
+  
+  if not user.is_active:
+    raise AuthenticationError("User Inactive (Usuario Inactivo)")
+  # -- allowed (str) != .value -- #
+  access_tokens, _= access_token(subject=user.username, role=user.role)
+  refresh_tokens, _ = refresh_token(subject=user.username, role=user.role)
+
+  return TokenResponse(access_token=access_tokens, refresh_token=refresh_tokens)

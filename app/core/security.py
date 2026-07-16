@@ -89,9 +89,9 @@ def _create_token(
 
 
 # === Create: Access Token ===
-def access_token(user_id:str, role:str) -> tuple[str,str]:
+def access_token(subject:str, role:str) -> tuple[str,str]:
   return _create_token(
-    subject=user_id, 
+    subject=subject, 
     role=role,
     token_type= "access", 
     expires_delta=timedelta(minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES), 

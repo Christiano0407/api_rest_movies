@@ -16,9 +16,14 @@ from app.db.session import get_db
 from app.models.orm import TokenBlocklist, Users
 from app.schemas.auth import RefreshTokenRequest, TokenResponse, UserRegister
 from app.schemas.user import UserResponse
+from app.schemas.tmdb_token_blocklist import ( 
+  TMDBLinkPayload, TMDBRequestTokenResponse, 
+  TokenBlockListCreate, TokenBlockListResponse)
+from app.services.tmdb_client import TMDBClient
+from app.services.auth import create_tokens
 
 
-## === ---------- Router: AUTH [Endpoint] ---------- ##
+## === ---------- Router: AUTH [Endpoint] ----- ----- ##
 router = APIRouter(prefix="/auth", tags=["Identity & Access"])
 
 ## === ---------- Register [Endpoint] ---------- ##
@@ -135,6 +140,3 @@ async def logout(
         exp=datetime.fromtimestamp(exp, tz=UTC),
         ))
     await db.commit()
-
-
-## ---- Vinculación de cuenta real de TMDB (requerido por /account/watchlist) ----- ##

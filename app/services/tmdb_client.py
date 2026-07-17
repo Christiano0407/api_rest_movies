@@ -8,6 +8,7 @@ from aiocache import Cache
 
 from app.core.exceptions import BusinessLogicError, NotFoundError
 from app.schemas.tmdb_movies import GatewayPaginationResponse
+from app.schemas.tmdb_token_blocklist import TMDBRequestTokenResponse
 
 logger = structlog.get_logger(__name__)
 

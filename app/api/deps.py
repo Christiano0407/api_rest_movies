@@ -22,7 +22,8 @@ from app.core.security import decode_token
 from app.core.redis_client import get_redis
 from app.enums import RoleEnum
 from app.db.session import get_db
-from app.models.orm import Users, TMDBSessions, TokenBlocklist  
+from app.models.orm import Users, TMDBSessions, TokenBlocklist
+from app.services.tmdb_client import TMDBClient
 
 # redis_client |
 
@@ -65,7 +66,7 @@ def require_roles(*roles: RoleEnum):
   }
 
   def _dependency(user: Users = Depends(get_current_user)) -> Users:
-    if user.role.value not in allowed:
+    if user.role not in allowed:
       raise AuthorizationError()
     return user
   
@@ -76,3 +77,17 @@ require_editor_or_admin = require_roles(RoleEnum.ADMIN, RoleEnum.EDITOR)
 async def get_redis_dep() -> AsyncGenerator[Redis, None]:
   async for conn in get_redis():
     yield conn
+
+
+async def get_tmdb_client() -> AsyncGenerator[TMDBClient, None]:
+  client = TMDBClient(
+      api_key=settings.TMDB_API_KEY,
+      access_token=settings.TMDB_ACCESS_TOKEN or None,
+      base_url=settings.TMDB_BASE_URL,
+      timeout=settings.TMDB_TIMEOUT_SECONDS,
+      max_retries=settings.TMDB_MAX_RETRIES,
+  )
+  try:
+      yield client
+  finally:
+      await client.close()

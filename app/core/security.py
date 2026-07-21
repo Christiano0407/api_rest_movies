@@ -84,7 +84,7 @@ def _create_token(
     "exp": now + expires_delta,
     **(extra or {}), 
   }
-  token = jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
+  token = jwt.encode(payload, settings.jwt_private_key, algorithm=settings.JWT_ALGORITHM)
   return token, jti
 
 
@@ -108,7 +108,7 @@ def refresh_token(subject:str, role:str) -> tuple[str,str]:
 
 # === Decode (Decodificar el Error) Token  | Error Token ===
 def decode_token(token:str) -> dict[str, Any]: 
-  return jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
+  return jwt.decode(token, settings.jwt_public_key, algorithms=[settings.JWT_ALGORITHM])
 
 #? ─── FastAPI Dependencies ────────────────────────────────────────────────────
 # - Minimal parsed token payload injected into routes. (Carga útil mínima del token analizado inyectada en las rutas)  # noqa: E501

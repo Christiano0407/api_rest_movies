@@ -13,12 +13,12 @@ class TMDBLinkPayload(BaseModel):
 
 class TokenBlockListCreate(BaseModel):
   jti: str
-  exp: datetime
+  expires_at: datetime
 
 
 class TokenBlockListResponse(BaseModel):
   model_config = ConfigDict(from_attributes=True)
   id: int
   jti: str
-  exp: datetime
-  blocked_at: datetime
+  expires_at: datetime
+  revoked_at: datetime

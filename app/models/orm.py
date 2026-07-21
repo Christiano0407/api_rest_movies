@@ -40,9 +40,10 @@ class TMDBSessions(Base):
         Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
     session_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    account_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     access_token: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(
+    connected_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
     user: Mapped["Users"] = relationship("Users", back_populates="tmdb_sessions")

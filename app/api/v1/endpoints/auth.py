@@ -112,7 +112,7 @@ async def refresh_access_token(
     db.add(TokenBlocklist(
         jti=jti,
         token_type="refresh",
-        subject=user.id,
+        user_id=user.id,
         expires_at=datetime.fromtimestamp(exp, tz=UTC),
         revoked_at=datetime.now(tz=UTC),
     ))
@@ -125,7 +125,7 @@ async def refresh_access_token(
 
 
 ## === ---------- Logout [Endpoint] ---------- ##
-@router.post("/logout", status_code=status.HTTP_406_NOT_ACCEPTABLE)
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 async def logout(
     token: str = Depends(oath2_scheme), 
     user: Users = Depends(get_current_user), 
@@ -136,7 +136,10 @@ async def logout(
     jti: str = decoded.get("jti", "")
     exp: int = decoded.get("exp", 0)
     db.add(TokenBlocklist(
-        jti=jti, 
-        exp=datetime.fromtimestamp(exp, tz=UTC),
-        ))
+        jti=jti,
+        token_type="access",
+        user_id=user.id,
+        expires_at=datetime.fromtimestamp(exp, tz=UTC),
+        revoked_at=datetime.now(tz=UTC),
+    ))
     await db.commit()

@@ -95,7 +95,7 @@ def register_exception_handler(app: FastAPI) -> None:
    ) -> JSONResponse: 
       return JSONResponse(
          status_code=status.HTTP_409_CONFLICT, 
-         content={"error": True, "status_code": 404, "detail": exc.detail}
+         content={"error": True, "status_code": 409, "detail": exc.detail}
       )
 
 

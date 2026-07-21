@@ -52,8 +52,6 @@ class Settings(BaseSettings):
   CACHE_TTL_SECONDS: int = 120 # Default
   
   # --- JWT (JSON Web Tokens) | RS256 asimétrico (ver nota en core/security.py sobre por qué no HS256) --- #  # noqa: E501
-  JWT_SECRET_KEY: str = "CHANGE_ME_IN_PRODUCTION_use_32+_random_chars"
-  #JWT_ALGORITHM: str = "HS256" 
   JWT_PRIVATE_KEY_PATH: str = "/app/keys/private.pem"
   JWT_PUBLIC_KEY_PATH: str = "/app/keys/public.pem"
   JWT_ALGORITHM: str = "RS256"
@@ -127,14 +125,6 @@ class Settings(BaseSettings):
                 f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
             )
     return self
-
-  @field_validator("JWT_SECRET_KEY")
-  @classmethod
-  def validator_secret_key(cls, v:str) -> str:
-      if len(v) <32:
-        raise ValueError("" \
-        "jwt_secret_key must be at least 32 characters (Debe tener al menos 32 caracteres.)")
-      return v
 
   @model_validator(mode="after")
   def secure_cookie_in_production(self) -> Settings:

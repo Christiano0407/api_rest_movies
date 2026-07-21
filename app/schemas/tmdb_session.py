@@ -7,6 +7,11 @@ class TMDBSessionCreate(BaseModel):
     account_id: int | None = None
 
 
+class TMDBLinkResponse(BaseModel): 
+    session_id: str
+    account_id: int | None = None
+
+
 class TMDBAccountIdUpdate(BaseModel):
     account_id: int
 

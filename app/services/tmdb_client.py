@@ -8,8 +8,19 @@ import asyncio
 from aiocache import Cache
 
 from app.core.exceptions import BusinessLogicError, NotFoundError
-from app.schemas.tmdb_movies import GatewayPaginationResponse
+from app.schemas.tmdb_movies import ( 
+    GatewayPaginationResponse, 
+    WatchlistPayload, 
+    WatchlistSyncResult 
+    )
 from app.schemas.tmdb_token_blocklist import TMDBRequestTokenResponse
+from app.schemas.auth import (
+    TokenResponse, 
+    RefreshTokenRequest,
+    UserRegister, 
+    UserResponse,
+)
+from app.schemas.tmdb_session import TMDBSessionResponse
 
 logger = structlog.get_logger(__name__)
 
@@ -95,12 +106,17 @@ class TMDBClient:
             from_cache=False,
             rate_limiting_remaining=0,
         )
-
-    async def create_request_token(self) -> str:
+    # === ---- AUTH Flow ---- === #
+    async def create_request_token(self) -> TokenResponse:
         """Obtener el Token desde TMDB"""
-        try:
-            pass
-        except httpx.HTTPStatusError as exc:
-            pass
-        except httpx.RequestError as exc:
-            pass
+        data = await self._request("GET", "authentication/token/new")
+        return TokenResponse(**data)
+    
+    async def create_session(self, request_token: str) -> TMDBSessionResponse:
+        """Token - Session"""
+        data = await self._request("POST", "/authentication/token/new", json={"request_token": request_token})
+        return TMDBSessionResponse(**data)
+
+    ## === ----- Movies ----- === ##
+
+    ## === ----- WatchList ----- === ##

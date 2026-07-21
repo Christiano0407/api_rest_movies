@@ -4,6 +4,7 @@ from typing import Any, Literal
 
 import httpx
 import structlog
+import asyncio
 from aiocache import Cache
 
 from app.core.exceptions import BusinessLogicError, NotFoundError
@@ -14,9 +15,57 @@ logger = structlog.get_logger(__name__)
 
 
 class TMDBClient:
-    def __init__(self, api_key: str, base_url: str, redis: Cache):
-        self._client = httpx.AsyncClient(base_url=base_url, params={"api_key": api_key})
+    def __init__(
+            self, 
+            api_key: str | None = None,
+            access_toke: str | None = None, 
+            base_url: str = "https://api.themoviedb.org/3", 
+            redis: Cache, 
+            timeout: int = 10, 
+            max_retries: int = 3,
+            ) -> None:
+        header: dict[str, str] = {}
+        params: dict[str, str] = {}
+
+        if access_toke: 
+            header["Authorization"] = f"Bearer {access_toke}"
+        elif api_key: 
+             params={"api_key": api_key}
+
+        self._client = httpx.AsyncClient(
+            base_url=base_url, 
+            headers=header, 
+            params=params, 
+            timeout=httpx.Timeout(timeout)
+            )
         self.cache = redis
+        self.max_retries = max_retries
+
+    async def _request(self, method:str, path: str, **kwargs: Any) -> dict[str, Any]:
+        """Request & Rate Limiting"""
+        last_exc: Exception | None = None
+        for attempt in range(self.max_retries):
+            try: 
+                resp = await self._client.request(method, path, **kwargs)
+            except httpx.RequestError as exc:
+                logger.warning("tmdb_request_error", path=path, attempt=attempt, error=str(exc))
+                last_exc = exc 
+                if attempt < self.max_retries - 1: 
+                    await asyncio.sleep(2 ** attempt)
+                continue
+            if resp.status_code == 429: 
+                raise BusinessLogicError(f"TMDB rate limit. Retry-After: {resp.headers.get('retry-After', '?')}s")
+            if resp.status_code == 404: 
+                raise NotFoundError("Resource not found in TMDB")
+            if resp.is_error:
+                logger.error("tmdb_api_error", path=path, status=resp.status_code, body=resp.text)
+
+            return resp.json()
+        
+        raise BusinessLogicError(f"TMDB unavailable after {self.max_retries}") from last_exc
+    
+    async def close(self) -> None:
+        await self._client.aclose()
 
     async def get_movies_by_category(
         self,
@@ -47,5 +96,11 @@ class TMDBClient:
             rate_limiting_remaining=0,
         )
 
-    async def close(self) -> None:
-        await self._client.aclose()
+    async def create_request_token(self) -> str:
+        """Obtener el Token desde TMDB"""
+        try:
+            pass
+        except httpx.HTTPStatusError as exc:
+            pass
+        except httpx.RequestError as exc:
+            pass

@@ -18,9 +18,9 @@ from app.schemas.auth import (
     TokenResponse, 
     RefreshTokenRequest,
     UserRegister, 
-    UserResponse,
+    TMDBAccountResponse,
 )
-from app.schemas.tmdb_session import TMDBSessionResponse
+from app.schemas.tmdb_session import TMDBSessionResponse, TMDBAccountResponse
 
 logger = structlog.get_logger(__name__)
 
@@ -112,10 +112,15 @@ class TMDBClient:
         data = await self._request("GET", "authentication/token/new")
         return TokenResponse(**data)
     
-    async def create_session(self, request_token: str) -> TMDBSessionResponse:
+    async def create_session(self, request_token:str) -> TMDBSessionResponse:
         """Token - Session"""
         data = await self._request("POST", "/authentication/token/new", json={"request_token": request_token})
         return TMDBSessionResponse(**data)
+    
+    async def get_account_details(self, session_id:str) -> TMDBAccountResponse:
+        """TMDB Details About Account"""
+        data = await self._request("GET", "/account", params={"session_id": session_id})
+        return TMDBAccountResponse(id=data["id"], username=data.get("username", ""))
 
     ## === ----- Movies ----- === ##
 

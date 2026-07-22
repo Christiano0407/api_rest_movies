@@ -44,12 +44,15 @@ router = APIRouter(prefix="/auth", tags=["Identity & Access"])
 
 ## === ---------- Vinculación de cuenta TMDB  ---------- ##
 @router.post("/tmdb/request-token", response_model=TMDBRequestTokenResponse)
-async def create_tmdb_request_token(self, 
+async def create_tmdb_request_token(
+  tmdb: TMDBClient = Depends(get_tmdb_client), 
   user: Users = Depends(get_current_user)) -> TMDBRequestTokenResponse: 
-  request_token = await self.TMDBClient.create_request_token()
-  authorization_url = f"https://www.themoviedb.org/authenticate/{request_token}"
+  request_token_data = await tmdb.create_request_token()
+  authorization_url = f"https://www.themoviedb.org/authenticate/{request_token_data}"
   return TMDBRequestTokenResponse(
-    request_token=request_token, tmdb_authorize_url=authorization_url)
+    request_token=request_token_data.request_token, 
+    tmdb_authorize_url=authorization_url
+    )
 
 
 @router.post("/tmdb/link", response_model=TMDBSessionResponse, status_code=201)
@@ -80,6 +83,6 @@ async def link_tmdb_account(
       )
     db.add(existing)
 
-    await db.commit()
-    await db.refresh(existing)
-    return TMDBSessionResponse.model_validate(existing)
+  await db.commit()
+  await db.refresh(existing)
+  return TMDBSessionResponse.model_validate(existing)

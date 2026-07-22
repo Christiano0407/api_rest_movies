@@ -18,7 +18,7 @@ logger = structlog.get_logger(__name__)
 class CacheService:
   def __init__(self, redis: Redis, ttl: int = 120) -> None:
     self._redis = redis
-    self._ttl = ttl
+    self._ttl = ttl # Define cuánto tiempo permanecerán los datos en Redis antes de expirar automáticamente.#
 
   async def _get_raw(self, key: str) -> str | None:
     try:

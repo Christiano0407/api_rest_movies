@@ -47,13 +47,14 @@ async def _resolved_paginated_response(
   )
 
   return GatewayPaginationResponse(
-    **data.model_dump(), 
+    **data.model_dump(), # model_dump() (Pydantic v2) convierte el modelo en un diccionario.
     from_cache=from_cache, 
     rate_limiting_remaining = remaining,
   )
 
 
 # ------ Search Movies ------ #
+
 
 
 # ------ [Get] Movies per CATEGORY ------ #

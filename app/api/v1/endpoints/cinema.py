@@ -8,11 +8,12 @@ from typing import Literal
 from fastapi import APIRouter, Depends, Query, Request, Response
 from redis.asyncio import Redis
 
+from app.core.config import settings
 from app.api.deps import get_cache_service, get_current_user, get_tmdb_client
 from app.models.orm import Users
 from app.schemas.tmdb_movies import GatewayPaginationResponse
 from app.services.cache import CacheService
-from app.services.rate_limiter import get_rate_limit_remaining, role_based_rate_limit
+from app.services.rate_limiter import get_rate_limit_for_role, get_rate_limit_remaining, role_based_rate_limit
 from app.services.tmdb_client import TMDBClient
 
 router = APIRouter(prefix="/cinema", tags=["Cinema Discovery"])
@@ -33,7 +34,16 @@ async def _resolved_paginated_response(
     Núcleo compartido del cache-aside — lo usan tanto el 
     listado por categoría como la búsqueda.
   """
-  pass
+  remaining = await get_rate_limit_for_role(
+    user.role.value
+  )
+  limit = settings.RATE_LIMITS_PER_MINUTE.get(user.role, settings.RATE_LIMITS_PER_MINUTE["Users"])
+  response.headers["X-RateLimit-Limit"] = str(limit)
+  response.headers["X-RateLimit-Remaining"] = str(remaining)
+
+  cached = await CacheService.get_cached_movies(redis, cache_key)
+
+
 # ------ Search Movies ------ #
 
 

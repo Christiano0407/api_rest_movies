@@ -24,24 +24,33 @@ MovieCategory = Literal["now_playing", "popular", "top_rated", "upcoming"]
 # ------ Paginated Response ------ #
 async def _resolved_paginated_response(
     *, 
+    request: Request,
     response: Response, 
     user: Users, 
     redis:Redis, 
-    cache_key: str, 
-    fetch_from_tmdb: Callable[[], Awaitable[dict]],
+    category: str,
+    page: int,  
+    fetch_from_tmdb: Callable[[], Awaitable[GatewayPaginationResponse]],
 ) -> GatewayPaginationResponse:
   """
     Núcleo compartido del cache-aside — lo usan tanto el 
     listado por categoría como la búsqueda.
   """
-  remaining = await get_rate_limit_for_role(
-    user.role.value
-  )
-  limit = settings.RATE_LIMITS_PER_MINUTE.get(user.role, settings.RATE_LIMITS_PER_MINUTE["Users"])
+  remaining = await get_rate_limit_remaining(request)
+  limit = settings.RATE_LIMITS_PER_MINUTE.get(user.role, 60)
   response.headers["X-RateLimit-Limit"] = str(limit)
   response.headers["X-RateLimit-Remaining"] = str(remaining)
 
-  cached = await CacheService.get_cached_movies(redis, cache_key)
+  cache_svc=CacheService(redis=redis, ttl=settings.CACHE_TTL_SECONDS)
+  data, from_cache = await cache_svc.get_cached_or_fetch(
+    category=category, page=page, factory=fetch_from_tmdb
+  )
+
+  return GatewayPaginationResponse(
+    **data.model_dump(), 
+    from_cache=from_cache, 
+    rate_limiting_remaining = remaining,
+  )
 
 
 # ------ Search Movies ------ #

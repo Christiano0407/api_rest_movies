@@ -18,12 +18,12 @@ def get_rate_limit_for_role(role: str) -> str:
     return f"{limit}/minute"
 
 
-def role_based_rate_limit(role: str) -> Callable[[Callable], Callable]:
+async def role_based_rate_limit(role: str) -> Callable[[Callable], Callable]:
     limit_str = get_rate_limit_for_role(role)
     return limiter.limit(limit_str)
 
 
-def get_rate_limit_remaining(request: Request) -> int:
+async def get_rate_limit_remaining(request: Request) -> int:
     remaining = getattr(request.state, "view_rate_limit", None)
     if remaining is not None:
         return max(int(remaining), 0)

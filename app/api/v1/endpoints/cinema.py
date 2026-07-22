@@ -2,10 +2,11 @@
 Flujo de LECTURA (Cache-Aside + Proxy). No toca la RDB.
 FastAPI -> Redis (rate limit) -> Redis (caché) -> [MISS] TMDB -> Pydantic (Adapter) -> Redis (SETEX).
 """
-
+from collections.abc import Awaitable, Callable
 from typing import Literal
 
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, Query, Request, Response
+from redis.asyncio import Redis
 
 from app.api.deps import get_cache_service, get_current_user, get_tmdb_client
 from app.models.orm import Users
@@ -19,8 +20,27 @@ router = APIRouter(prefix="/cinema", tags=["Cinema Discovery"])
 MovieCategory = Literal["now_playing", "popular", "top_rated", "upcoming"]
 
 
+# ------ Paginated Response ------ #
+async def _resolved_paginated_response(
+    *, 
+    response: Response, 
+    user: Users, 
+    redis:Redis, 
+    cache_key: str, 
+    fetch_from_tmdb: Callable[[], Awaitable[dict]],
+) -> GatewayPaginationResponse:
+  """
+    Núcleo compartido del cache-aside — lo usan tanto el 
+    listado por categoría como la búsqueda.
+  """
+  pass
+# ------ Search Movies ------ #
+
+
+# ------ [Get] Movies per CATEGORY ------ #
+""" 
 @router.get('/movies/{category}', response_model=GatewayPaginationResponse)
-@role_based_rate_limit('User')
+@role_based_rate_limit('Users')
 async def get_movies_by_category(
   category: MovieCategory,
   page: int = Query(1, ge=1, le=500),
@@ -39,4 +59,4 @@ async def get_movies_by_category(
     **data.model_dump(),
     from_cache=from_cache,
     rate_limiting_remaining=remaining,
-  )
+  ) """

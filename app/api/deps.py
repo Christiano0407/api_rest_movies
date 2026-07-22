@@ -23,6 +23,7 @@ from app.core.redis_client import get_redis
 from app.enums import RoleEnum
 from app.db.session import get_db
 from app.models.orm import Users, TMDBSessions, TokenBlocklist
+from app.services.cache import CacheService
 from app.services.tmdb_client import TMDBClient
 
 # redis_client |
@@ -91,3 +92,9 @@ async def get_tmdb_client() -> AsyncGenerator[TMDBClient, None]:
       yield client
   finally:
       await client.close()
+
+
+async def get_cache_service(
+  redis: Redis = Depends(get_redis_dep),
+) -> CacheService:
+  return CacheService(redis=redis, ttl=settings.CACHE_TTL_SECONDS)

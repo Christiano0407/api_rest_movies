@@ -18,7 +18,7 @@ def get_rate_limit_for_role(role: str) -> str:
     return f"{limit}/minute"
 
 
-async def role_based_rate_limit(role: str) -> Callable[[Callable], Callable]:
+def role_based_rate_limit(role: str) -> Callable[[Callable], Callable]:
     limit_str = get_rate_limit_for_role(role)
     return limiter.limit(limit_str)
 

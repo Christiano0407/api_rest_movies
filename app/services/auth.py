@@ -14,7 +14,8 @@ from app.core.exceptions import AuthenticationError, ConflictError
 from app.core.security import access_token, decode_token, hash_password, refresh_token, verify_password
 from app.enums import RoleEnum
 from app.models.orm import TokenBlocklist, Users
-from app.schemas.auth import TokenResponse, UserRegister, UserResponse
+from app.schemas.auth import TokenResponse
+from app.schemas.user import UserRegister, UserResponse
 
 logger = structlog.get_logger(__name__)
 

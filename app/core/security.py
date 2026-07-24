@@ -32,25 +32,14 @@ from typing import Any
 import bcrypt
 import jwt
 
-from fastapi import Cookie, Depends
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from passlib.context import CryptContext
-
 from app.core.config import settings
-from app.core.exceptions import AuthenticationError, AuthorizationError
-from app.enums import RoleEnum
+from app.core.exceptions import AuthenticationError
 
 
 
 #? ─── Hash | Hashing | Hashed | Bcrypt) ───────────────────────────────────────────────────────────
 
-_BCRYPT_MAX_BYTES = 72 # bcrypt trunca en silencio lo que exceda esto; se valida también en el schema.  # noqa: E501
-
-
-_pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-""" def hash_password(plain:str) -> str:
-  return _pwd_context.hash(plain) """
+_BCRYPT_MAX_BYTES = 72
 
 def hash_password(plain_password: str) -> str:
   secret = plain_password.encode("utf-8")[:_BCRYPT_MAX_BYTES]
@@ -62,7 +51,6 @@ def verify_password(plain_password:str, hashed:str) -> bool:
 
 
 #? ─── JWT (JSON Web Token) [Tipado - Seguridad Token] ─────────────────────────────────────────────
-_bearer_scheme = HTTPBearer(auto_error=False)
 
 # === Create & Type Token (Creamos & Tipamos) Token === 
 def _create_token(
@@ -110,79 +98,3 @@ def refresh_token(subject:str, role:str) -> tuple[str,str]:
 def decode_token(token:str) -> dict[str, Any]: 
   return jwt.decode(token, settings.jwt_public_key, algorithms=[settings.JWT_ALGORITHM])
 
-#? ─── FastAPI Dependencies ────────────────────────────────────────────────────
-# - Minimal parsed token payload injected into routes. (Carga útil mínima del token analizado inyectada en las rutas)  # noqa: E501
-
-class CurrentUser: 
-  """
-    Minimal parsed token payload injected into routes. (Carga útil mínima del token analizado inyectada en las rutas)  # noqa: E501
-    - ID User 
-    - Role (RBAC)
-  """  # noqa: E501
-  def __init__(self, user_id:str, role:str) -> None:
-    self.user_id = user_id
-    self.role = role
-  
-  @staticmethod
-  def _get_current_user(
-      credentials: HTTPAuthorizationCredentials | None = Depends(_bearer_scheme),
-  ) -> CurrentUser: 
-    if not credentials: 
-      raise AuthenticationError("Credenciales Inválidas o han expirado | Tiempo del Token expiró")
-    
-    payload = decode_token(credentials.credentials)
-    
-    if payload.get("type") != "access":
-        raise AuthenticationError("Token Inválido - Se requiere access token")
-
-    role = payload.get("role")
-    if role is None:
-      raise AuthenticationError("Token Inválido - Se requiere access token")
-    
-    return CurrentUser(user_id=payload["sub"], role=payload.get("role", "reader"))
-  
-  @staticmethod
-  def get_current_user(
-      user: CurrentUser=Depends(_get_current_user)
-  ) -> CurrentUser:
-    return user
-  
-  @staticmethod
-  def require_roles(*roles:RoleEnum): 
-    """
-        Factory that returns a dependency enforcing role membership.(Fábrica que devuelve 
-        una dependencia que impone la membresía del rol.)
-        - 403 Forbidden en la autenticación 'JWT' indica que el servidor rechaza 
-            el acceso porque el token es inválido, está ausente 
-            o carece de los permisos necesarios.
-        - 403 Forbidden indica que el servidor entiende la solicitud pero niega 
-            el acceso porque el cliente carece de los permisos necesarios.
-    """
-    allowed = {role.value for role in roles}
-
-    def _dep(user:CurrentUser = Depends(CurrentUser.get_current_user)) -> CurrentUser:
-      if user.role not in allowed: 
-        raise AuthorizationError(
-          "Acceso denegado | el token es inválido, está ausente o carece de los permisos necesarios"
-        )
-      return user
-      
-    return _dep
-
-  @staticmethod
-  def get_refresh_token_cookies(
-      refresh_token: str | None = Cookie(default=None,  alias="refresh_token"), 
-  ) -> dict[str, Any]: 
-    if not refresh_token: 
-      raise AuthenticationError("Refresh Token Ausente")
-    
-    payload = decode_token(refresh_token)
-
-    if payload.get("type") != "refresh":
-      raise AuthenticationError("Token Inválido - se requiere 'refresh token'")
-    return payload
-
-
-    
-require_admin = CurrentUser.require_roles(RoleEnum.ADMIN)
-require_editor_or_admin = CurrentUser.require_roles(RoleEnum.ADMIN, RoleEnum.EDITOR)

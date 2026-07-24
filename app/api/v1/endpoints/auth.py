@@ -14,8 +14,8 @@ from app.core.exceptions import AuthenticationError
 from app.core.security import access_token, decode_token, hash_password, refresh_token as create_refresh_token, verify_password
 from app.db.session import get_db
 from app.models.orm import TokenBlocklist, Users
-from app.schemas.auth import RefreshTokenRequest, TokenResponse, UserRegister
-from app.schemas.user import UserResponse
+from app.schemas.auth import RefreshTokenRequest, TokenResponse
+from app.schemas.user import UserRegister, UserResponse
 from app.schemas.tmdb_token_blocklist import ( 
   TMDBLinkPayload, TMDBRequestTokenResponse, 
   TokenBlockListCreate, TokenBlockListResponse)

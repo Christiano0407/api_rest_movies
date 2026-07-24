@@ -144,10 +144,10 @@ class TMDBClient:
 
     # === ---- Search Movies ---- === #
     async def search_movie(self, query:str, page: int) -> GatewayPaginationResponse:
-        data = await self._request("GET", "/movies/search", params={"query": query, "page": page})
+        data = await self._request("GET", "/search/movie", params={"query": query, "page": page})
         return GatewayPaginationResponse(
-            page=data.get("page", page), 
-            results=data.get("results", []), 
-            total_pages=data.get("total_page", 0), 
-            total_results=data.get("total_results", 0)
+            page=data.get("page", page),
+            results=data.get("results", []),
+            total_pages=data.get("total_pages", 0),
+            total_results=data.get("total_results", 0),
         )

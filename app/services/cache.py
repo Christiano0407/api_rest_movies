@@ -73,6 +73,22 @@ class CacheService:
     await self.set_cached_movies(category, page, value, ttl)
     return value, False
 
+  async def get_or_set(
+    self,
+    key: str,
+    factory: Callable[[], Awaitable[GatewayPaginationResponse]],
+    ttl: int | None = None,
+  ) -> tuple[GatewayPaginationResponse, bool]:
+    raw = await self._get_raw(key)
+    if raw is not None:
+      try:
+        return GatewayPaginationResponse.model_validate_json(raw), True
+      except Exception:
+        pass
+    value = await factory()
+    await self._set_raw(key, value.model_dump_json(), ttl)
+    return value, False
+
   @staticmethod
   def build_movie_key(category: str, page: int) -> str:
     return f'cinema:movies:{category}:{page}'

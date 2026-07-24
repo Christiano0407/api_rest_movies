@@ -95,30 +95,42 @@ async def search_movies(
     response=response, 
     user=user, 
     redis=redis,
+    page=page,
     cache_key=movies_search_cache_key(query, page), 
     fetch_from_tmdb=lambda: tmdb.search_movie(query, page), 
   )
 
+
+# ------ [Get] Movies | Complementary [Complementar info movie] Data ------ #
+@router.get("/movies/{movie_id}/complementary")
+async def get_movie_complementary(
+  *, 
+  movie_id: int, 
+  user: Users = Depends(get_current_user),
+  tmdb: TMDBClient = Depends(get_tmdb_client)
+) -> dict:
+  return await tmdb.get_complementary_data(movie_id)
+
+
 # ------ [Get] Movies per CATEGORY ------ #
-""" 
+
 @router.get('/movies/{category}', response_model=GatewayPaginationResponse)
-@role_based_rate_limit('Users')
-async def get_movies_by_category(
-  category: MovieCategory,
-  page: int = Query(1, ge=1, le=500),
+async def get_movies_category(
+  *,
   request: Request,
-  current_user: Users = Depends(get_current_user),
-  cache: CacheService = Depends(get_cache_service),
+  response: Response, 
+  category: MovieCategory,
+  user: Users = Depends(get_current_user),
+  page: int = Query(default=1, ge=1, le=500),
+  redis: Redis = Depends(get_redis_dep),
   tmdb: TMDBClient = Depends(get_tmdb_client),
 ) -> GatewayPaginationResponse:
-  data, from_cache = await cache.get_cached_or_fetch(
-    category=category,
-    page=page,
-    factory=lambda: tmdb.get_movies_by_category(category, page),
+  return await _resolved_paginated_response(
+    request=request,
+    response=response, 
+    user=user, 
+    redis=redis, 
+    page=page, 
+    cache_key=movies_list_cache_key(category, page), 
+    fetch_from_tmdb=lambda:tmdb.get_movies_by_category("popular", page)
   )
-  remaining = get_rate_limit_remaining(request)
-  return GatewayPaginationResponse(
-    **data.model_dump(),
-    from_cache=from_cache,
-    rate_limiting_remaining=remaining,
-  ) """

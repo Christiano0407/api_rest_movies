@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -31,10 +31,11 @@ class MovieComplementaryData(BaseModel):
 
 
 class WatchlistPayload(BaseModel):
-    media_type: str = Field(..., pattern=r"^(movie|tv)$")
+    media_type: Literal["movie", "tv"]
     media_id: int
     watchlist: bool
 
+# media_type: str = Field(..., pattern=r"^(movie|tv)$")
 
 class WatchlistSyncResult(BaseModel):
     success: bool

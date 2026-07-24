@@ -1,11 +1,13 @@
 paths:
+  # =========================================================
+  # AUTH & IDENTITY
+  # =========================================================
   /auth/register:
     post:
       tags:
-        - identity & Access
-      summary: Registro de Usuario (local) | User Register
-      description: Registrar un nuevo Usuario en la base de datos relacional
-        (postgres) aplicando hashing con bcrypt
+        - Identity & Access
+      summary: Registro de Usuario (local)
+      description: Registrar un nuevo usuario con hash bcrypt
       operationId: registerUser
       requestBody:
         required: true
@@ -15,121 +17,241 @@ paths:
               $ref: '../components/schemas/UserRegister.yml'
       responses:
         '201':
-          description: Usuario creado exitosamente 
+          description: Usuario creado exitosamente
           content:
             application/json:
               schema:
                 $ref: '../components/schemas/UserResponse.yml'
         '422':
-          description: Error de validación de datos de entrada (Pydantic)
+          description: Error de validación (Pydantic)
 
-  /auth/login: 
-    post: 
+  /auth/login:
+    post:
       tags:
-        - identity & Access
-      summary: Inicio de Sesión (o Volver a entrar) local (OAuth2 Password Flow)
-      description: Intercambiar credenciales verificadas por un par de 
-        Tokens Criptográficos (Access JTW & Refresh Token)
+        - Identity & Access
+      summary: Inicio de Sesión (OAuth2 Password Flow)
+      description: Intercambiar credenciales por un par de tokens (Access JWT + Refresh Token)
       operationId: loginUser
-      requestBody: 
+      requestBody:
         required: true
-        content: 
+        content:
           application/x-www-form-urlencoded:
             schema:
               type: object
               properties:
-                username: 
+                username:
                   type: string
                   example: alma_cantu
-                password: 
+                password:
                   type: string
                   format: password
                   example: "developerStrongPassword01"
       responses:
-        "200": 
-          description: Autenticación correcta | Authentication Success (AUTH)
-          content: 
-            application/json:
-              schema:
-                $ref:'../components/schemas/TokenScheme.yml'
-        "401": 
-          description:Credenciales Inválidas 
-
-  # =========================================================
-  # --- Path TMDB --- #
-  # CINEMA CORE & DISCOVERY (Cached & Proxy TMDB)
-  # =========================================================
-  /cinema/movies/{category}:
-    get: 
-      tags: 
-        - Cinema Discovery
-      summary: Obtener listado de películas por Categoría
-      description: | 
-        Mapear Dinámicamente los 'endpoints' (Rutas) de listas de TMDB (`now_playing`, `popular`, `top_rated`, `upcoming`).
-        ++flujo (Pipeline/Proceso)**: Valida JWT local -> Evalúa cuota en Redis por Rol -> Verificar caché en Redis.
-      operationId: getMoviesByCategory
-      security: 
-        - OAuth2PasswordBearer: []
-      parameters: 
-        - $ref: '#components/parameters/MovieCategoryParam'
-        - $ef: '#/components/parameters/MoviePageParam'
-      responses: 
-        "200": 
-          description: Listado Obtenido (desde Caché o Fetch asíncrono a TMDB)
-          headers: 
-            X-Cache: 
-              schema: 
-                type: string
-              description: Inyectado desde Gateway(API). Valores Comerciales MIT.
+        "200":
+          description: Autenticación correcta
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GatewayPaginationResponse'
+                $ref: '../components/schemas/TokenScheme.yml'
         "401":
-          description: Token Inválido o Expirado (Vuelve a ejecutar credenciales)
-        "429": 
-          description: Rate Limit(peticions/queries) de Negocio excedido para el minuto actual según tu Rol.
+          description: Credenciales Inválidas
+
+  /auth/refresh:
+    post:
+      tags:
+        - Identity & Access
+      summary: Rotar Refresh Token
+      description: Revoca el refresh token usado y emite un nuevo par de tokens
+      operationId: refreshToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refresh_token:
+                  type: string
+      responses:
+        "200":
+          description: Nuevo par de tokens emitido
+          content:
+            application/json:
+              schema:
+                $ref: '../components/schemas/TokenScheme.yml'
+        "401":
+          description: Refresh Token inválido o revocado
+
+  /auth/logout:
+    post:
+      tags:
+        - Identity & Access
+      summary: Cerrar Sesión
+      description: Revoca el access token actual agregando su jti al blocklist
+      operationId: logoutUser
+      security:
+        - OAuth2PasswordBearer: []
+      responses:
+        "204":
+          description: Sesión cerrada exitosamente
+        "401":
+          description: Token inválido o expirado
+
+  /auth/tmdb/request-token:
+    post:
+      tags:
+        - Identity & Access
+      summary: Solicitar token de autenticación TMDB
+      description: Obtiene un request_token de TMDB para iniciar el flujo OAuth
+      operationId: createTmdbRequestToken
+      security:
+        - OAuth2PasswordBearer: []
+      responses:
+        "200":
+          description: Request token creado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  request_token:
+                    type: string
+                  tmdb_authorize_url:
+                    type: string
+        "401":
+          description: Token inválido
+
+  /auth/tmdb/link:
+    post:
+      tags:
+        - Identity & Access
+      summary: Vincular cuenta TMDB
+      description: Canjea el request_token aprobado por un session_id y lo persiste
+      operationId: linkTmdbAccount
+      security:
+        - OAuth2PasswordBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                request_token:
+                  type: string
+      responses:
+        "201":
+          description: Cuenta TMDB vinculada exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  user_id:
+                    type: integer
+                  session_id:
+                    type: string
+                  account_id:
+                    type: integer
+                    nullable: true
+                  connected_at:
+                    type: string
+                    format: date-time
+        "401":
+          description: Token inválido
+
+  # =========================================================
+  # CINEMA DISCOVERY (Cached & Proxy TMDB)
+  # =========================================================
+  /cinema/movies/search:
+    get:
+      tags:
+        - Cinema Discovery
+      summary: Buscar películas por texto libre
+      description: Proxy con caché hacia el endpoint /search/movie de TMDB
+      operationId: searchMovies
+      security:
+        - OAuth2PasswordBearer: []
+      parameters:
+        - name: query
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 200
+          example: "Star Wars"
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+            maximum: 500
+      responses:
+        "200":
+          description: Resultados de búsqueda (desde caché o TMDB)
+          content:
+            application/json:
+              schema:
+                $ref: '../components/schemas/GatewayPaginationResponse.yml'
+        "401":
+          description: Token inválido o expirado
+
+  /cinema/movies/{category}:
+    get:
+      tags:
+        - Cinema Discovery
+      summary: Obtener listado de películas por Categoría
+      description: Mapea dinámicamente los endpoints de listas de TMDB
+      operationId: getMoviesByCategory
+      security:
+        - OAuth2PasswordBearer: []
+      parameters:
+        - $ref: '../components/parameters/MovieCategoryParam.yml'
+        - $ref: '../components/parameters/MoviePageParam.yml'
+      responses:
+        "200":
+          description: Listado obtenido (desde caché o TMDB)
+          content:
+            application/json:
+              schema:
+                $ref: '../components/schemas/GatewayPaginationResponse.yml'
+        "401":
+          description: Token inválido o expirado
 
   /cinema/movies/{movie_id}/complementary:
-    get: 
-      tags: 
+    get:
+      tags:
         - Cinema Discovery
-      summary: Obtener (get) y agregar los datos complementarios de una película (movie) por ID
-      description: | 
-        Ejecutar llamadas concurrentes asíncronas (Call async & Await) no bloqueantes
-        (`asyncio.gather`) hacia los endpoints de detalles, créditos y videos de TMDB para reducir la latencia en el Frontend.
+      summary: Obtener datos complementarios de una película
+      description: Ejecuta llamadas concurrentes asíncronas a detalles, créditos y videos de TMDB
       operationId: getMoviesComplementaryData
       security:
         - OAuth2PasswordBearer: []
       parameters:
-        - $ref: '/components/parameters/MovieIdParam.yml'
+        - $ref: '../components/parameters/MovieIdParam.yml'
       responses:
-        "200": 
-          description: JSON agregado con éxito desde TMDB mediante concurrencia (async&Await)
+        "200":
+          description: JSON agregado desde TMDB
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MovieComplementaryData'
-        "401": 
-          description: Token Inválido o Expirado (Vuelve a ejecutar credenciales)
-        "403": 
-          description: No tienes los permisos requeridos (RBAC).
-            
-
-
+                $ref: '../components/schemas/MovieComplementaryData.yml'
+        "401":
+          description: Token inválido o expirado
 
   # =========================================================
-  # USER SYNC & MUTATIONS (TMDB Session Binding)
+  # USER ACCOUNT SYNC (TMDB Session Binding)
   # =========================================================
   /account/watchlist:
-    post: 
-      tags: 
+    post:
+      tags:
         - User Account Sync
-      summary: Sincronizar & Alterar la Watchlist del Usuario (RBAC) y Data (postgres) en su cuenta real de TMDB
-      description: |
-        Identificar al usuario por su JWT (Token) local, extraer **SQLAlchemy(ORM)** su 'tmdb_session_id', 
-        y ejecuta la mutación de la API externa de TMDB (Agregar info). 
-        **Impacta directamente en las métricas de Popularidad y Trending de TMDB diariamente.**
+      summary: Sincronizar watchlist del usuario con TMDB
+      description: Extrae la session de TMDB del usuario y ejecuta la mutación
       operationId: updateTMDBWatchlist
       security:
         - OAuth2PasswordBearer: []
@@ -138,15 +260,15 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/WatchListPayload'
+              $ref: '../components/schemas/WatchlistPayload.yml'
       responses:
-        "200": 
-          description: Sincronización exitosa con los servidores de TMDB API
-          content: 
+        "200":
+          description: Sincronización exitosa
+          content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WatchListSyncResult'
-        "400": 
-          description: El Usuario no ha vinculado o creado una cuenta válida de TMDB en éste Gateway
-        "401": 
-          description: Token JWT Local Inválido. Ha expirado o Ausente.
+                $ref: '../components/schemas/WatchlistSyncResult.yml'
+        "400":
+          description: El usuario no ha vinculado su cuenta TMDB
+        "401":
+          description: Token JWT inválido o expirado

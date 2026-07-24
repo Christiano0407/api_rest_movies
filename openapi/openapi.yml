@@ -4,22 +4,16 @@ info:
   title: Cinema API Gateway | Secure & Auth Token
   version: 1.0.0
   description: |
-    API Gateway empresarial de alta velocidad. Intercepta, valida 
+    API Gateway empresarial de alta velocidad. Intercepta, valida
     y optimiza las peticiones API de TMDB. Inyecta capas transversales:
     * **Authentication (AUTH) & Authorization (JWT + RBAC) | Tokens & Roles **
-    * **Rate Limiting (Límite de Queries - peticiones) Dinámico por Rol (Redis - Caché)** 
+    * **Rate Limiting (Límite de Queries - peticiones) Dinámico por Rol (Redis - Caché)**
     * **Caché Inteligente de Contenido de Cine (Redis < 2ms)**
 
-# =========================================================
-# Server (Servidor)
-# =========================================================
 servers:
   - url: http://localhost:8000/api/v1
     description: Servidor de Desarrollo Local (Detrás de Nginx)
 
-# =========================================================
-# DEFINICIÓN GLOBAL DE TAGS (Controla el orden en la UI)
-# =========================================================
 tags:
   - name: Identity & Access
     description: Autenticación y Autorización (JWT + RBAC)
@@ -28,29 +22,8 @@ tags:
   - name: User Account Sync
     description: Sincronización de watchlists y mutaciones con servidores reales de TMDB
 
-# =========================================================
-# ENDPOINTS DE RUTAS INDIVIDUALS (Evita romper el estándar)
-# =========================================================
 paths:
-  /cinema/movies/{category}:
-    $ref: './paths/movies_category.yml'
-  /cinema/movies/{movie_id}/complementary:
-    $ref: './paths/movies_complementary.yml'
-  /account/watchlist:
-    $ref: './paths/watchlist.yml'
+  $ref: './paths/paths.yml#/paths'
 
 components:
-  schemas:
-    UserRegister:
-      $ref: './components/schemas/UserRegister.yml'
-    GatewayPaginationResponse:
-      $ref: './components/schemas/GatewayPaginationResponse.yml'
-    MovieComplementaryData:
-      $ref: './components/schemas/MovieComplementaryData.yml'
-    WatchlistSyncResult:
-      $ref: './components/schemas/WatchlistSyncResult.yml'
-  parameters:
-    MovieCategoryParam:
-      $ref: './components/parameters/MovieCategoryParam.yml'
-    MovieIdParam:
-      $ref: './components/parameters/MovieIdParam.yml'
+  $ref: './components/components.yml#/components'

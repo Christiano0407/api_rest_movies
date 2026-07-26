@@ -14,12 +14,12 @@
       -  # Payload: Claims [Es un objeto JSON codificado en Base64 que almacena pares clave-valor.]
     # ------------------------------------------------------------------------------------------- #
     # --- Nivel de módulo (NO anidada dentro de configure_logging) ---
-    Nota de arquitectura: se evaluó migrar a HS256 + python-jose + refresh en cookies,
-    pero se descartó — HS256 requiere distribuir un secreto compartido a cada servicio
-    que necesite *verificar* tokens, mientras que RS256 permite publicar la llave pública
-    libremente (relevante en un patrón Gateway, donde otros servicios podrían necesitar
-    verificar sin poder emitir). python-jose además tiene menos mantenimiento activo que
-    PyJWT. Se mantiene lo ya probado end-to-end (19/19 tests, Docker, CI).
+    Decisión de arquitectura:
+      - Algoritmo RS256 (no HS256) — permite publicar la llave pública para que otros
+        servicios verifiquen tokens sin poder emitirlos.
+      - Librería PyJWT (no python-jose) — usa cryptography (OpenSSL) como backend,
+        evitando las dependencias vulnerables ecdsa + pyasn1 presentes en python-jose.
+        Migración realizada en julio 2026.
 
 """
 

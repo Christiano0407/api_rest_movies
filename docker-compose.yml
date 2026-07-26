@@ -39,7 +39,7 @@ services:
 
   api:
     build:
-      context: .
+      context: ./cinema-gateway
       dockerfile: Dockerfile
     container_name: cinema_api
     restart: unless-stopped
@@ -72,7 +72,7 @@ services:
     ports: 
       - "8000:80"
     volumes:
-      - ./api-gateway/conf.d/api-gateway.conf.ro
+      - ./api_gateway/nginx.conf:/etc/nginx/nginx.conf:ro
     networks:
       - cinema_net
 

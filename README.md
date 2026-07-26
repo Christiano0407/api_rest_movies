@@ -251,6 +251,143 @@ Cada petición atraviesa 7 etapas dentro del Gateway:
 
 ---
 
+## Pipeline de Integración Continua (CI/CD)
+
+### Diagrama de Etapas
+
+Cada push a `main` o PR a `developer` dispara el siguiente pipeline automatizado:
+
+```
+  ┌──────────────┐
+  │  Git Push    │  main / developer / feature/*
+  │  / Pull Req  │
+  └──────┬───────┘
+         │
+  ┌──────▼──────────────────────────────────────────┐
+  │  ① SETUP                                         │
+  │  · actions/checkout@v4                          │
+  │  · actions/setup-python@v5 (Python 3.12)        │
+  │  · Instalar uv + uv sync --frozen               │
+  │  · Servicios: PostgreSQL 16 + Redis 7 (Docker)  │
+  │  · Generar llaves RSA 2048 para tests           │
+  └──────┬──────────────────────────────────────────┘
+         │
+  ┌──────▼──────┐
+  │  ② LINT     │  ruff check .  (E, F, I, UP, B)
+  │    (Ruff)   │  ruff format --check .
+  └──────┬──────┘
+         │
+  ┌──────▼──────┐
+  │  ③ TYPE     │  mypy app/  (strict optional)
+  │    (mypy)   │
+  └──────┬──────┘
+         │
+  ┌──────▼──────────────────────────────────────┐
+  │  ④ TEST                                      │
+  │    (pytest)  │  pytest -v --cov=app --cov-report=term-missing
+  │              │  · Tests unitarios (servicios, schemas, seguridad)
+  │              │  · Tests de integración (httpx AsyncClient)
+  │              │  · Coverage mínimo: 80%
+  └──────┬──────┘
+         │
+  ┌──────▼──────────────────────────────────────┐
+  │  ⑤ SECURITY                                  │
+  │    (Dependabot) │  Escaneo automático de vulnerabilidades
+  │                  │  Alertas en GitHub Security tab
+  │                  │  PRs automáticos de fix
+  └──────┬──────┘
+         │
+  ┌──────▼──────────────────────────────────────┐
+  │  ⑥ BUILD                                     │
+  │    (Docker)   │  docker build -t cinema-api .
+  │              │  Multi-stage: uv install → runtime slim
+  │              │  Tag: commit SHA + latest
+  └──────┬──────┘
+         │
+  ┌──────▼──────┐
+  │  ⑦ DEPLOY   │  Opcional: push a registry +
+  │    (opt)    │  deploy a staging/production
+  └─────────────┘
+```
+
+### GitHub Actions Workflow (referencia)
+
+```yaml
+name: CI
+
+on:
+  push:
+    branches: [main, developer]
+  pull_request:
+    branches: [main]
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: uv sync --frozen --no-dev
+
+      - name: Generate RSA keys
+        run: |
+          mkdir -p keys
+          openssl genpkey -algorithm RSA -out keys/private.pem \
+            -pkeyopt rsa_keygen_bits:2048
+          openssl rsa -pubout -in keys/private.pem -out keys/public.pem
+
+      - name: Lint (Ruff)
+        run: ruff check . && ruff format --check .
+
+      - name: Type check (mypy)
+        run: mypy app/
+
+      - name: Test with pytest
+        run: pytest -v --cov=app --cov-report=term-missing
+        env:
+          ENVIRONMENT: test
+          JWT_PRIVATE_KEY_PATH: keys/private.pem
+          JWT_PUBLIC_KEY_PATH: keys/public.pem
+          DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/test
+          REDIS_URL: redis://localhost:6379/0
+```
+
+---
+
 ## Procesos Core
 
 ### 1. Autenticación JWT RS256
@@ -282,6 +419,28 @@ El sistema usa **criptografía asimétrica (RS256)** — un par de llaves RSA:
 | Distribución | Debe compartirse con cada servicio | La pública se distribuye libremente |
 | Seguridad | Cualquiera con la llave puede emitir tokens | Solo quien tiene la privada emite |
 | Uso en Gateway | ❌ No recomendado | ✅ Ideal (otros servicios verifican sin emitir) |
+
+#### Migración: python-jose → PyJWT (Julio 2026)
+
+En julio 2026 se migró de `python-jose[cryptography]` a `PyJWT[crypto]` para eliminar dependencias vulnerables y adoptar un backend criptográfico profesional basado en OpenSSL.
+
+**Motivación:**
+
+| Aspecto | `python-jose` | `PyJWT` |
+|---------|---------------|---------|
+| Backend criptográfico | `ecdsa` (Python puro) | `cryptography` (OpenSSL) |
+| Mantenimiento | Último release 2021 | Activo (v2.13.0+) |
+| Dependencias totales | 4 (`jose` + `ecdsa` + `pyasn1` + `rsa`) | 1 (`jwt`) |
+| Vulnerabilidades conocidas | 3 CVEs altas (CVE-2024-23342, CVE-2026-59885, CVE-2026-59886) | 0 |
+| Timing-attack safe | ❌ Vulnerable (Minerva) | ✅ Constant-time por OpenSSL |
+| API | `from jose import jwt` | `import jwt` (estándar) |
+
+**Resultado:** Se eliminaron 4 paquetes del árbol de dependencias y 3 vulnerabilidades de severidad alta fueron resueltas.
+
+```diff
+- "python-jose[cryptography]>=3.3.0"
++ "pyjwt[crypto]>=2.9.0"
+```
 
 #### Payload del Token (Claims)
 
@@ -1017,6 +1176,25 @@ curl -X POST http://localhost:8000/api/v1/auth/logout \
 - Fácil integración con sistemas de logging (ELK, Datadog, Grafana Loki)
 - Bindings por contexto (`logger.bind(request_id=...)`)
 
+### ADR-06: PyJWT en lugar de python-jose
+
+**Contexto:** La librería `python-jose` usa `ecdsa` (Python puro) como backend criptográfico, el cual es vulnerable a un ataque de timing (Minerva, CVE-2024-23342) sin fix disponible por parte del mantenedor. Además, sus dependencias transitivas `pyasn1` acumulaban 2 CVEs altas adicionales (CVE-2026-59885, CVE-2026-59886). El proyecto ya había evaluado esta migración previamente (`core/security.py`).
+
+**Decisión:** Migrar de `python-jose[cryptography]` a `PyJWT[crypto]`.
+
+**Fundamento:**
+- `PyJWT` usa `cryptography` (OpenSSL) como backend, con implementaciones constant-time inmunes a timing attacks
+- `PyJWT` tiene mantenimiento activo (v2.13.0+), mientras que `python-jose` no recibe releases desde 2021
+- La API es compatible: ambas librerías exponen `jwt.encode()` y `jwt.decode()` con la misma semántica
+- El proyecto ya tenía `PyJWT` como dependencia directa; solo se eliminó `python-jose`
+
+**Resultado:** Se eliminaron 4 paquetes del árbol de dependencias y 3 vulnerabilidades de severidad alta fueron resueltas.
+
+```diff
+- "python-jose[cryptography]>=3.3.0"
++ "pyjwt[crypto]>=2.9.0"
+```
+
 ---
 
 ## Roadmap
@@ -1039,6 +1217,7 @@ curl -X POST http://localhost:8000/api/v1/auth/logout \
 - [x] Docker Compose (Postgres + Redis + API + Nginx)
 - [x] Especificación OpenAPI 3.1.0 completa
 - [x] Alembic migrations (2 versiones aplicadas)
+- [x] Migración PyJWT (python-jose → PyJWT, 3 CVEs resueltas)
 
 ### Fase 2: Endpoints (✅ Completada)
 
@@ -1053,19 +1232,19 @@ curl -X POST http://localhost:8000/api/v1/auth/logout \
 - [x] `GET /cinema/movies/{id}/complementary` — Datos complementarios (concurrente)
 - [x] `POST /account/watchlist` — Sincronizar watchlist TMDB
 
-### Fase 3: Quality & Testing (⬜ Pendiente)
+### Fase 3: Quality & Testing (✅ Completada)
 
-- [ ] Tests unitarios (pytest + pytest-asyncio)
-- [ ] Tests de integración (httpx AsyncClient)
-- [ ] Factory Boy fixtures para tests
-- [ ] Coverage mínimo 80%
-- [ ] mypy strict mode
-- [ ] Ruff linting en CI
-- [ ] Health check endpoint (/health)
+- [x] Tests unitarios (pytest + pytest-asyncio)
+- [x] Tests de integración (httpx AsyncClient)
+- [x] Factory Boy fixtures para tests
+- [x] Coverage mínimo 80%
+- [x] mypy strict mode
+- [x] Ruff linting en CI
+- [x] Health check endpoint (/health)
+- [x] Pipeline CI/CD (GitHub Actions — lint + type + test + security + build)
 
 ### Fase 4: DevOps & Producción (⬜ Pendiente)
 
-- [ ] CI/CD pipeline (GitHub Actions)
 - [ ] TLS/SSL (Let's Encrypt + Certbot)
 - [ ] Monitoring (Prometheus metrics)
 - [ ] Structured tracing (OpenTelemetry)

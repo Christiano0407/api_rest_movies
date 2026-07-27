@@ -55,4 +55,4 @@ class UserResponse(BaseModel):
   role: RoleEnum
   is_active: bool
   created_at: datetime
-  update_at: datetime
+  updated_at: datetime

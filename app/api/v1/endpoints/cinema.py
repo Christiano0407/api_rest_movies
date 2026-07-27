@@ -46,7 +46,7 @@ async def _resolved_paginated_response(
   )
 
   return GatewayPaginationResponse(
-    **data.model_dump(),
+    **data.model_dump(exclude={"from_cache", "rate_limiting_remaining"}),
     from_cache=from_cache,
     rate_limiting_remaining=remaining,
   )

@@ -913,16 +913,22 @@ curl http://localhost:8000/api/v1/health
 # ─── Inicio / Detención ───
 docker compose up -d                  # Background
 docker compose up -d --build          # Rebuild + background
+docker compose stop                   # Detener contenedores (sin borrarlos)
 docker compose down                   # Detener + limpiar contenedores
 docker compose down -v                # + eliminar volúmenes (BORRA DATOS)
+
+# ─── Servicios individuales ───
+docker compose up -d postgres         # Solo PostgreSQL (útil para migraciones)
+docker compose restart nginx          # Reiniciar Nginx tras cambiar config
 
 # ─── Logs ───
 docker compose logs -f api            # API en tiempo real
 docker compose logs -f postgres       # PostgreSQL
 docker compose logs -f redis          # Redis
+docker compose logs nginx --tail 30   # Últimas 30 líneas de Nginx
 
 # ─── Rebuild ───
-docker compose build --no-cache       # Completo
+docker compose build --no-cache       # Completo (sin caché)
 docker compose build api              # Solo API
 
 # ─── Acceso a servicios ───
@@ -930,12 +936,18 @@ docker compose exec postgres psql -U cinema_admin -d cinema_db
 docker compose exec redis redis-cli
 docker compose exec api bash
 
+# ─── Consultar puertos ───
+docker compose port postgres 5432     # Ej: 0.0.0.0:5436
+
+# ─── Ver estado con health ───
+docker compose ps
+
 # ─── Migraciones (dentro del contenedor) ───
 docker compose exec api alembic upgrade head
 docker compose exec api alembic revision --autogenerate -m "descripción"
 
 # ─── Health ───
-curl http://localhost:8000/api/v1/health
+curl http://localhost:8000/health
 ```
 
 ### Arquitectura Docker
@@ -978,11 +990,23 @@ alembic downgrade base                  # Todas (vaciar BD)
 alembic revision --autogenerate -m "descripción"
 alembic revision -m "descripción"       # Manual (vacía)
 
+# ─── Sellar (stamp) ───
+alembic stamp <revision_id>            # Marcar revisión sin ejecutar migraciones
+                                       # Útil cuando la BD fue creada manualmente
+
 # ─── Información ───
 alembic history                         # Historial completo
 alembic heads                           # Revisiones "punta"
 alembic current                         # Revisión actual de la BD
 alembic branches                        # Ramas (si existen)
+
+# ─── Ejecutar desde el HOST (con PostgreSQL en Docker) ───
+# Necesitas sobrescribir DATABASE_URL apuntando a localhost:5436
+DATABASE_URL="postgresql+asyncpg://cinema_admin:cinema_db_api_gateway@localhost:5436/cinema_db" \
+  uv run alembic upgrade head
+
+DATABASE_URL="postgresql+asyncpg://cinema_admin:cinema_db_api_gateway@localhost:5436/cinema_db" \
+  uv run alembic stamp 0002_users_updated_at
 ```
 
 ---
@@ -1016,95 +1040,96 @@ pytest --cov=app --cov-report=term-missing  # Coverage terminal
 
 ## Ejemplos de Uso (curl)
 
-### Registro
+### Health Check
 
 ```bash
-curl -X POST http://localhost:8000/api/v1/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username": "alma_cantu",
-    "email": "alma@example.com",
-    "password": "SecurePass123!"
-  }'
-
-# Response: 201
-{
-  "id": 1,
-  "username": "alma_cantu",
-  "email": "alma@example.com",
-  "role": "User",
-  "is_active": true,
-  "created_at": "2026-07-24T12:00:00Z"
-}
-```
-
-### Login
-
-```bash
-curl -X POST http://localhost:8000/api/v1/auth/login \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "username=alma_cantu&password=SecurePass123!"
+curl -s http://localhost:8000/health | jq
 
 # Response: 200
-{
-  "access_token": "eyJhbGciOiJSUzI1NiIs...",
-  "refresh_token": "eyJhbGciOiJSUzI1NiIs...",
-  "token_type": "bearer"
-}
+# {"status": "healthy"}
 ```
 
-### Obtener Películas Populares
+### Registro (usa JSON)
 
 ```bash
-# Primer request (MISS → va a TMDB, ~300ms)
-curl -s http://localhost:8000/api/v1/cinema/movies/popular?page=1 \
-  -H "Authorization: Bearer <access_token>" | jq '.from_cache'
+curl -s -X POST http://localhost:8000/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "mi_usuario",
+    "email": "user@example.com",
+    "password": "SecurePass123!"
+  }' | jq
 
-# → false
-
-# Segundo request (HIT → Redis, <2ms)
-curl -s http://localhost:8000/api/v1/cinema/movies/popular?page=1 \
-  -H "Authorization: Bearer <access_token>" | jq '.from_cache'
-
-# → true
+# Response: 201
+# {
+#   "id": 1,
+#   "username": "mi_usuario",
+#   "email": "user@example.com",
+#   "role": "User",
+#   "is_active": true,
+#   "created_at": "2026-07-27T18:08:53Z",
+#   "updated_at": "2026-07-27T18:08:53Z"
+# }
 ```
 
-### Buscar Películas
+### Login (usa form-data, NO JSON)
 
 ```bash
-curl -s "http://localhost:8000/api/v1/cinema/movies/search?query=Star+Wars&page=1" \
-  -H "Authorization: Bearer <access_token>" | jq '.results[0].title'
+# ⚠️ OAuth2PasswordRequestForm requiere form-data, no JSON
+curl -s -X POST http://localhost:8000/api/v1/auth/login \
+  -d "username=mi_usuario&password=SecurePass123!" | jq
 
-# → "Star Wars"
+# Response: 200
+# {
+#   "access_token": "eyJhbGciOiJSUzI1NiIs...",
+#   "refresh_token": "eyJhbGciOiJSUzI1NiIs...",
+#   "token_type": "bearer"
+# }
+```
+
+### Buscar Películas (con token JWT)
+
+```bash
+# 1. Login para obtener token
+TOKEN=$(curl -s -X POST http://localhost:8000/api/v1/auth/login \
+  -d "username=mi_usuario&password=SecurePass123!" | jq -r '.access_token')
+
+# 2. Buscar películas (URL entre comillas dobles para evitar globbing de zsh)
+curl -s "http://localhost:8000/api/v1/cinema/movies/search?query=batman&page=1" \
+  -H "Authorization: Bearer $TOKEN" | jq '.results[].title'
+
+# → "The Batman", "Batman Begins", "The Dark Knight", ...
+```
+
+### Películas por Categoría
+
+```bash
+curl -s "http://localhost:8000/api/v1/cinema/movies/popular?page=1" \
+  -H "Authorization: Bearer $TOKEN" | jq '.results[0].title'
 ```
 
 ### Sincronizar Watchlist
 
 ```bash
-curl -X POST http://localhost:8000/api/v1/account/watchlist \
-  -H "Authorization: Bearer <access_token>" \
+curl -s -X POST http://localhost:8000/api/v1/account/watchlist \
+  -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "media_type": "movie",
     "media_id": 11,
     "watchlist": true
-  }'
+  }' | jq
 
 # Response: 200
-{
-  "success": true,
-  "status_message": "Success."
-}
+# {"success": true, "status_message": "Success."}
 ```
 
 ### Refresh Token
 
 ```bash
-curl -X POST http://localhost:8000/api/v1/auth/refresh \
+curl -s -X POST http://localhost:8000/api/v1/auth/refresh \
   -H "Content-Type: application/json" \
-  -d '{
-    "refresh_token": "<refresh_token>"
-  }'
+  -d '{"refresh_token": "<refresh_token>"}' | jq
 
 # Response: 200 (nuevo par de tokens, el anterior queda revocado)
 ```
@@ -1112,8 +1137,8 @@ curl -X POST http://localhost:8000/api/v1/auth/refresh \
 ### Logout
 
 ```bash
-curl -X POST http://localhost:8000/api/v1/auth/logout \
-  -H "Authorization: Bearer <access_token>"
+curl -s -X POST http://localhost:8000/api/v1/auth/logout \
+  -H "Authorization: Bearer $TOKEN"
 
 # Response: 204 No Content
 ```
@@ -1216,7 +1241,7 @@ curl -X POST http://localhost:8000/api/v1/auth/logout \
 - [x] Docker multi-stage build (uv + Python slim)
 - [x] Docker Compose (Postgres + Redis + API + Nginx)
 - [x] Especificación OpenAPI 3.1.0 completa
-- [x] Alembic migrations (2 versiones aplicadas)
+- [x] Alembic migrations (3 versiones: 0001_initial, 0002_updated_at, 0003_sync_orm)
 - [x] Migración PyJWT (python-jose → PyJWT, 3 CVEs resueltas)
 
 ### Fase 2: Endpoints (✅ Completada)

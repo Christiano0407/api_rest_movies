@@ -39,8 +39,8 @@ services:
 
   api:
     build:
-      context: ./cinema-gateway
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: cinema-gateway/Dockerfile
     container_name: cinema_api
     restart: unless-stopped
     env_file: .env

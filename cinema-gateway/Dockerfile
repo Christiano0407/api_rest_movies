@@ -8,7 +8,7 @@ WORKDIR /app
 
 # Solo el manifiesto + lockfile: esta capa se cachea mientras las dependencias no cambien,
 # sin importar cuántas veces cambie el código de app/.
-COPY pyproject.toml uv.lock ./
+COPY cinema-gateway/pyproject.toml cinema-gateway/uv.lock ./
 
 RUN uv venv /opt/venv
 ENV UV_PROJECT_ENVIRONMENT=/opt/venv \ 
@@ -19,7 +19,7 @@ ENV UV_PROJECT_ENVIRONMENT=/opt/venv \
 RUN  uv sync --frozen --no-install-project --no-dev
 
 # Ahora sí copiamos el código y lo instalamos (no editable) en el mismo venv.
-COPY . .
+COPY cinema-gateway/ .
 RUN uv sync --frozen --no-dev
 
 

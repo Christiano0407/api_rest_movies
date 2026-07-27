@@ -20,6 +20,7 @@ RUN  uv sync --frozen --no-install-project --no-dev
 
 # Ahora sí copiamos el código y lo instalamos (no editable) en el mismo venv.
 COPY cinema-gateway/ .
+COPY app/ ./app/
 RUN uv sync --frozen --no-dev
 
 
